@@ -49,6 +49,17 @@ public class ParkingLot {
             floors.add(floor);
         }
     }
+    
+    public ParkingSpot getSpotById(String spotId) {
+        for (Floor floor : floors) {
+            for (ParkingSpot spot : floor.getSpots()) {
+                if (spot.getSpotID().equals(spotId)) {
+                    return spot;
+                }
+            }
+        }
+        return null; // can't find
+    }
 
     public String getName() { return name; }
     public List<Floor> getFloors() { return floors; }

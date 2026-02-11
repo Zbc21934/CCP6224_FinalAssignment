@@ -109,12 +109,53 @@ public class MainFrame extends JFrame {
     }
 
     private void showSpotDetails(ParkingSpot spot) {
-        String status = spot.isOccupied() ? "Occupied" : "Available";
-        String message = "Spot ID: " + spot.getSpotID() + "\n"
-                       + "Type: " + spot.getClass().getSimpleName() + "\n"
-                       + "Hourly Rate: RM " + spot.getHourlyRate() + "\n"
-                       + "Status: " + status;
+        // 1. if occupied, show dialog
+        if (spot.isOccupied()) {
+            String message = "Spot ID: " + spot.getSpotID() + "\n"
+                    + "Status: Occupied\n"
+                    + "Type: " + spot.getClass().getSimpleName() + "\n"
+                    + "Hourly Rate: RM " + spot.getHourlyRate();
+            JOptionPane.showMessageDialog(this, message, "Spot Occupied", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
-        JOptionPane.showMessageDialog(this, message, "Spot Details", JOptionPane.INFORMATION_MESSAGE);
+        // 2. if empty, show menu
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+        panel.add(new JLabel("Spot ID: " + spot.getSpotID() + " (" + spot.getClass().getSimpleName() + ")"));
+
+        JTextField plateField = new JTextField();
+        panel.add(new JLabel("Enter License Plate:"));
+        panel.add(plateField);
+
+        String[] vehicleTypes = {"Car", "Motorcycle", "SUV", "Handicapped"};
+        JComboBox<String> typeBox = new JComboBox<>(vehicleTypes);
+        panel.add(new JLabel("Select Vehicle Type:"));
+        panel.add(typeBox);
+
+        // 3. confirmDialog (OK / Cancel)
+        int result = JOptionPane.showConfirmDialog(null, panel, "Park Vehicle",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        // 4. if OK
+        if (result == JOptionPane.OK_OPTION) {
+            String plate = plateField.getText().trim();
+            String type = (String) typeBox.getSelectedItem();
+
+            if (plate.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "License plate cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // --- Facade ---
+            // parkVehicle use Vehicle.create() to do vertification
+            boolean success = parkingSystem.parkVehicle(plate, type, spot.getSpotID());
+
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Vehicle Parked Successfully!");
+                loadFloor(parkingSystem.getParkingLot().getFloors().get(0)); 
+            } else {
+                JOptionPane.showMessageDialog(this, "Parking Failed! (Check vehicle type rules)", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 }
