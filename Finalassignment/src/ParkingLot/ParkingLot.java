@@ -1,4 +1,4 @@
-package ParkingLot;
+package ParkingLot; // Inside the ParkingLot package
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,18 +12,23 @@ public class ParkingLot {
         this.floors = new ArrayList<>();
     }
 
-    // Logic to build the floors and spots
     public void initialize(int numFloors, int spotsPerFloor) {
+        int spotsPerRow = 10; // Let's assume 10 spots make 1 row
+
         for (int i = 1; i <= numFloors; i++) {
             String floorID = "Floor " + i;
             Floor floor = new Floor(floorID);
 
-            // Distribute spot types:
-            // 20% Compact, 50% Regular, 10% Handicapped, 20% Reserved
             for (int j = 1; j <= spotsPerFloor; j++) {
-                String spotID = "F" + i + "-S" + j; 
+                // Logic to calculate Row and Spot number within that row
+                int rowNum = ((j - 1) / spotsPerRow) + 1;
+                int spotNum = ((j - 1) % spotsPerRow) + 1;
+
+                // New ID Format: F1-R1-S1
+                String spotID = "F" + i + "-R" + rowNum + "-S" + spotNum;
                 
                 ParkingSpot spot;
+                // Distribute types (Same percentages as before)
                 if (j <= spotsPerFloor * 0.2) {
                     spot = new CompactSpot(spotID);
                 } else if (j <= spotsPerFloor * 0.7) {

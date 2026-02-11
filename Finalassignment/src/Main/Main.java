@@ -1,23 +1,13 @@
-package Main; 
+package Main;
 
-import ParkingLot.*; 
-
-import java.util.List;
+import ParkingLot.MainFrame; // Import the GUI from the other package
+import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
-        // Now Main can find "ParkingSystemFacade" because of the import above
-        ParkingSystemFacade parkingSystem = new ParkingSystemFacade();
-        
-        ParkingLot lot = parkingSystem.getParkingLot();
-
-        System.out.println("=== Parking Lot System Initialized ===");
-        
-        for (Floor floor : lot.getFloors()) {
-            System.out.println("\n--- [ " + floor.getFloorID() + " ] ---");
-            for (ParkingSpot spot : floor.getSpots()) {
-                System.out.println("   " + spot.toString());
-            }
-        }
+        SwingUtilities.invokeLater(() -> {
+            MainFrame gui = new MainFrame();
+            gui.setVisible(true);
+        });
     }
 }
