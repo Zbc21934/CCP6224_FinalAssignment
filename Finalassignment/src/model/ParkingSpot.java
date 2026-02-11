@@ -1,6 +1,9 @@
-package ParkingLot;
+package model;
 
 // 1. The Abstract Parent Class
+
+import model.Vehicle;
+
 public abstract class ParkingSpot {
     protected String spotID;
     protected boolean isOccupied;

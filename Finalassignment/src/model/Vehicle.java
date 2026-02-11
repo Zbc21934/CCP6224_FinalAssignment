@@ -1,4 +1,4 @@
-package ParkingLot;
+package model;
 
 public abstract class Vehicle {
     protected String licensePlate;

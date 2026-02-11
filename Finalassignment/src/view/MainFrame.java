@@ -1,5 +1,8 @@
-package ParkingLot; // Moved to ParkingLot package
+package view; // Moved to ParkingLot package
 
+import controller.ParkingSystemFacade;
+import model.Floor;
+import model.ParkingSpot;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;

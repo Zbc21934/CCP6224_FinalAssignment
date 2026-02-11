@@ -1,5 +1,11 @@
-package ParkingLot; // Inside the ParkingLot package
+package model; // Inside the ParkingLot package
 
+import model.Floor;
+import model.ParkingSpot;
+import model.RegularSpot;
+import model.CompactSpot;
+import model.ReservedSpot;
+import model.HandicappedSpot;
 import java.util.ArrayList;
 import java.util.List;
 

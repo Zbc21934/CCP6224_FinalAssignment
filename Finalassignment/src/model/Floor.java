@@ -1,5 +1,6 @@
-package ParkingLot;
+package model;
 
+import model.ParkingSpot;
 import java.util.ArrayList;
 import java.util.List;
 

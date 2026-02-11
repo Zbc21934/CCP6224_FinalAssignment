@@ -1,14 +1,20 @@
 package main;
 
-import database.DbConnection; 
+import controller.ParkingSystemFacade;
 
-public class main {
-
+public class Main {
     public static void main(String[] args) {
-        System.out.println("System Starting...");
+        System.out.println("?System Starting...");
         
-        DbConnection.getInstance();
+        ParkingSystemFacade facade = new ParkingSystemFacade();
         
-        System.out.println("System Initialized. You can check the database file now.");
+        // TEST DB
+        boolean success = facade.parkVehicle("JQA1234", "Car", "F1-S01");
+        
+        if (success) {
+            System.out.println("Database Connected & Vehicle Parked Successfully!");
+        } else {
+            System.out.println("Insert failed. Check console for SQL errors.");
+        }
     }
 }
