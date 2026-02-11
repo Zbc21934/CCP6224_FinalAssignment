@@ -1,20 +1,26 @@
-package main;
+package Main;
 
-import controller.ParkingSystemFacade;
+import view.MainFrame; // Import your GUI window
+import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("?System Starting...");
-        
-        ParkingSystemFacade facade = new ParkingSystemFacade();
-        
-        // TEST DB
-        boolean success = facade.parkVehicle("JQA1234", "Car", "F1-S01");
-        
-        if (success) {
-            System.out.println("Database Connected & Vehicle Parked Successfully!");
-        } else {
-            System.out.println("Insert failed. Check console for SQL errors.");
-        }
+        System.out.println("🚀 Launching Parking System GUI...");
+
+        // This block starts the Java Swing Window
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // Create the Window
+                MainFrame gui = new MainFrame();
+                
+                // Make it visible
+                gui.setVisible(true);
+                
+                System.out.println("✅ GUI Launched Successfully!");
+            } catch (Exception e) {
+                System.out.println("❌ GUI Failed to Open:");
+                e.printStackTrace();
+            }
+        });
     }
 }

@@ -1,4 +1,4 @@
-package view; // Moved to ParkingLot package
+package view; 
 
 import controller.ParkingSystemFacade;
 import model.Floor;
