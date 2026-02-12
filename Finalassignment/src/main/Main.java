@@ -1,24 +1,31 @@
 package main;
 
-import view.MainFrame; // Import your GUI window
-import javax.swing.SwingUtilities;
+import view.MainFrame;
+import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
+        // try ti open Nimbus
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // error then use default design
+            try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ex) {}
+        }
+
         System.out.println("Launching Parking System GUI...");
 
-        // This block starts the Java Swing Window
         SwingUtilities.invokeLater(() -> {
             try {
-                // Create the Window
                 MainFrame gui = new MainFrame();
-                
-                // Make it visible
                 gui.setVisible(true);
-                
                 System.out.println("GUI Launched Successfully!");
             } catch (Exception e) {
-                System.out.println("GUI Failed to Open:");
                 e.printStackTrace();
             }
         });
