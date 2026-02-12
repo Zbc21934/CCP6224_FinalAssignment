@@ -5,6 +5,7 @@ import model.Floor;
 import model.ParkingSpot;
 import model.Vehicle;
 import model.Ticket;
+import view.ReceiptDialog;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -49,10 +50,10 @@ public class MainFrame extends JFrame {
         JPanel container = new JPanel(new BorderLayout());
         // Top Bar: Floor Selection
         JPanel floorSelectionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
-        // 1. 创建 Exit 按钮
+        // create Exit button
         JButton exitBtn = new JButton("Vehicle Exit (Enter Plate)");
-        exitBtn.setBackground(new Color(255, 200, 0)); // 橘色背景
-        exitBtn.setFont(new Font("Arial", Font.BOLD, 12)); // 调整字体让它好看点
+        exitBtn.setBackground(new Color(255, 200, 0)); 
+        exitBtn.setFont(new Font("Arial", Font.BOLD, 12)); 
         exitBtn.addActionListener(e -> {
             String plate = JOptionPane.showInputDialog(this, "Enter License Plate Number:");
             if (plate != null && !plate.trim().isEmpty()) {
@@ -60,13 +61,8 @@ public class MainFrame extends JFrame {
             }
         });
 
-        // 2. 🟢【关键修正】必须把按钮加入面板，否则看不见！
         floorSelectionPanel.add(exitBtn); 
-        
-        // 3. 设置边框
         floorSelectionPanel.setBorder(BorderFactory.createTitledBorder("Select Floor"));
-        
-        // 4. 添加楼层按钮
         List<Floor> floors = parkingSystem.getParkingLot().getFloors();
         for (Floor floor : floors) {
             JButton floorBtn = new JButton(floor.getFloorID());
@@ -214,8 +210,17 @@ public class MainFrame extends JFrame {
         if (payChoice == JOptionPane.YES_OPTION) {
             boolean paid = parkingSystem.processPayment(plateNumber);
             
-            if (paid) {
-                JOptionPane.showMessageDialog(this, "Payment Successful! Gate Opened.");
+           if (paid) {
+                // ✅ Payment Success! Generate Final Receipt
+                // Replace text to make it look like a final receipt
+                String finalReceiptHtml = bill.replace("EXIT RECEIPT", "OFFICIAL RECEIPT")
+                                                  .replace("TOTAL DUE", "AMOUNT PAID")
+                                                  .replace("blue", "green"); // Change color to green
+
+                // 🟢 Show the new ReceiptDialog
+                new ReceiptDialog(this, finalReceiptHtml).setVisible(true);
+
+                // Refresh UI
                 loadFloor(parkingSystem.getParkingLot().getFloors().get(0));
             } else {
                 JOptionPane.showMessageDialog(this, "Payment Failed!", "Error", JOptionPane.ERROR_MESSAGE);

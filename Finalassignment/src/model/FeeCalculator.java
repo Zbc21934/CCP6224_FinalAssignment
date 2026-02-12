@@ -1,33 +1,40 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package model;
 
-/**
- *
- * @author PatrickToh
- */
 import java.time.Duration;
 import java.time.LocalDateTime;
 
 public class FeeCalculator {
-
     public static double calculate(Vehicle vehicle, ParkingSpot spot, LocalDateTime entryTime) {
         long hours = getDurationInHours(entryTime);
+        
+        // 1. Rate
+        // use the spot rate first, if got bug can use the vehicle rate for the backup plan
+        double rate = (spot != null) ? spot.getHourlyRate() : vehicle.getHourlyRate();
 
-        double rate = vehicle.getHourlyRate();
-
-        // oku
+        // oku free
         if (spot != null && vehicle instanceof HandicappedVehicle && spot instanceof HandicappedSpot) {
-             rate = 0.0; 
+            System.out.println("ℹ️ Handicapped Discount Applied: Free Parking");
+            return 0.0;
         }
 
         return hours * rate;
     }
 
+ 
     public static long getDurationInHours(LocalDateTime entryTime) {
-        long hours = Duration.between(entryTime, LocalDateTime.now()).toHours();
-        return (hours == 0) ? 1 : hours;
+        LocalDateTime exitTime = LocalDateTime.now(); //set current time as exit time
+        
+        Duration duration = Duration.between(entryTime, exitTime);
+        
+        long hours = duration.toHours(); // rounding up
+        
+        //1.05 is 2 hours
+        if (duration.toMinutes() % 60 > 0) {
+            hours++;
+        }
+        
+        if (hours <= 0) hours = 1;
+        
+        return hours;
     }
 }

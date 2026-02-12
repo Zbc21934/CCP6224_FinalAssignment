@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Ticket {
-    private final String ticketId;    // 格式：T-PLATE-TIMESTAMP
+    private final String ticketId;
     private final String plateNumber;
     private final String vehicleType; 
     private final String spotId;
