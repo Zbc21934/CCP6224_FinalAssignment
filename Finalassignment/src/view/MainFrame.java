@@ -47,11 +47,26 @@ public class MainFrame extends JFrame {
 
     private JPanel createVisualPanel() {
         JPanel container = new JPanel(new BorderLayout());
-
         // Top Bar: Floor Selection
         JPanel floorSelectionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+        // 1. 创建 Exit 按钮
+        JButton exitBtn = new JButton("Vehicle Exit (Enter Plate)");
+        exitBtn.setBackground(new Color(255, 200, 0)); // 橘色背景
+        exitBtn.setFont(new Font("Arial", Font.BOLD, 12)); // 调整字体让它好看点
+        exitBtn.addActionListener(e -> {
+            String plate = JOptionPane.showInputDialog(this, "Enter License Plate Number:");
+            if (plate != null && !plate.trim().isEmpty()) {
+                performCheckOut(plate.trim());
+            }
+        });
+
+        // 2. 🟢【关键修正】必须把按钮加入面板，否则看不见！
+        floorSelectionPanel.add(exitBtn); 
+        
+        // 3. 设置边框
         floorSelectionPanel.setBorder(BorderFactory.createTitledBorder("Select Floor"));
         
+        // 4. 添加楼层按钮
         List<Floor> floors = parkingSystem.getParkingLot().getFloors();
         for (Floor floor : floors) {
             JButton floorBtn = new JButton(floor.getFloorID());
@@ -59,7 +74,7 @@ public class MainFrame extends JFrame {
             floorBtn.addActionListener(e -> loadFloor(floor));
             floorSelectionPanel.add(floorBtn);
         }
-
+        
         // Center: Grid
         spotsPanel = new JPanel();
         spotsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -170,12 +185,11 @@ public class MainFrame extends JFrame {
 
            if (ticket != null) { 
             String ticketMsg = "<html>" +
-                "<h3>Entry Success!</h3>" +
+                "<h3>✅ Entry Success!</h3>" +
                 "<b>Ticket ID:</b> " + ticket.getTicketId() + "<br>" +
                 "<b>Spot:</b> " + ticket.getSpotId() + "<br>" +
-                "<b>Entry Time:</b> " + ticket.getEntryTime().toString() + "<br>" +
+                "<b>Entry Time:</b> " + ticket.getFormattedEntryTime() + "<br>" + // 使用格式化后的时间
                 "</html>";
-            
             JOptionPane.showMessageDialog(this, ticketMsg, "Parking Ticket", JOptionPane.INFORMATION_MESSAGE);
             
             loadFloor(parkingSystem.getParkingLot().getFloors().get(0));
@@ -187,7 +201,11 @@ public class MainFrame extends JFrame {
     
     private void performCheckOut(String plateNumber) {
         String bill = parkingSystem.checkOutVehicle(plateNumber);
-
+        
+        if (bill == null || bill.equals("Vehicle not found.")) {
+             JOptionPane.showMessageDialog(this, "Vehicle not found or already paid!", "Error", JOptionPane.ERROR_MESSAGE);
+             return; 
+        }
         int payChoice = JOptionPane.showConfirmDialog(this, 
                 bill + "\n\nConfirm Payment?", 
                 "Payment Confirmation", 

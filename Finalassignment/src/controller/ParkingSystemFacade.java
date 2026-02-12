@@ -104,15 +104,39 @@ public class ParkingSystemFacade {
                     "<h3>--- EXIT RECEIPT ---</h3>" +
                     "<b>Ticket ID:</b> %s<br>" +
                     "<b>Type:</b> %s<br>" +
+                    "<b>Entry Time:</b> %s<br>" +
                     "<b>Parking Hours:</b> %d hrs<br>" +
                     "------------------------------<br>" +
                     "<b>Parking Fee:</b> RM %.2f<br>" +
                     "------------------------------<br>" +
                     "<b>TOTAL DUE:</b> <span style='color:blue; font-size:14px'>RM %.2f</span>" +
                     "</html>", 
-                    ticketId, type, (int)hours, parkingFee, parkingFee 
+                    ticketId, type,entryTime.format(fmt), hours, parkingFee, parkingFee 
                 );
             }
+            
+        /*=============================================this is for the fine
+              //check fine
+                //double fines = checkUnpaidFines(plateNumber);
+                //double totalDue = parkingFee + fines;
+
+               DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                return String.format(
+                    "<html>" +
+                    "<h3>--- EXIT BILL ---</h3>" +
+                    "<b>License Plate:</b> %s<br>" +
+                    "<b>Entry Time:</b> %s<br>" +
+                    "------------------------------<br>" +
+                    "• <b>Hours Parked:</b> %d hrs<br>" +
+                    "• <b>Parking Fee:</b> RM %.2f<br>" +
+                    "• <b>Unpaid Fines:</b> RM %.2f<br>" +
+                    "------------------------------<br>" +
+                    "• <b>TOTAL PAYMENT DUE:</b> <span style='color:blue'>RM %.2f</span>" +
+                    "</html>", 
+                    plateNumber, entryTime.format(fmt), hours, parkingFee, fines, totalDue
+                );
+            
+        ===========================================================*/
         } catch (Exception e) {
             e.printStackTrace();
         }

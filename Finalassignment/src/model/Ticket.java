@@ -28,6 +28,10 @@ public class Ticket {
     public String getSpotId() { return spotId; }
     public LocalDateTime getEntryTime() { return entryTime; }
 
+    public String getFormattedEntryTime() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return this.entryTime.format(formatter);
+}
     // Builder Pattern 
     public static class Builder {
         private String plateNumber;
@@ -47,5 +51,6 @@ public class Ticket {
         public Ticket build() {
             return new Ticket(this);
         }
+        
     }
 }
