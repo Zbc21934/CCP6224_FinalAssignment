@@ -1,4 +1,4 @@
-package main;
+package Main;
 
 import view.MainFrame; // Import your GUI window
 import javax.swing.SwingUtilities;

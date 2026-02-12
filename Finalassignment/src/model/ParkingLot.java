@@ -1,17 +1,11 @@
 package model; // Inside the ParkingLot package
 
-import model.Floor;
-import model.ParkingSpot;
-import model.RegularSpot;
-import model.CompactSpot;
-import model.ReservedSpot;
-import model.HandicappedSpot;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParkingLot {
-    private String name;
-    private List<Floor> floors;
+    private final String name;
+    private final List<Floor> floors;
 
     public ParkingLot(String name) {
         this.name = name;

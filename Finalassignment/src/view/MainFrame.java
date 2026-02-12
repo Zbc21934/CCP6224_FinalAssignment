@@ -7,7 +7,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-// We no longer need 'import ParkingLot.*;' because we are INSIDE the package now.
 
 public class MainFrame extends JFrame {
     private ParkingSystemFacade parkingSystem;
