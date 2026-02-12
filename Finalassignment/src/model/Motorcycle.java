@@ -18,4 +18,9 @@ public class Motorcycle extends Vehicle{
     public boolean canParkIn(ParkingSpot spot) {
         return spot instanceof CompactSpot;
     }
+    
+    @Override
+    public double getHourlyRate() {
+        return 2.0; // price/hours
+    }
 }

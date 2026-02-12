@@ -13,6 +13,7 @@ public abstract class Vehicle {
     
     public String getLicensePlate() { return licensePlate; }
     public String getType() { return type; }
+    public abstract double getHourlyRate();
     
     public static Vehicle create(String plate, String typeStr) {
         switch (typeStr.toUpperCase()) {

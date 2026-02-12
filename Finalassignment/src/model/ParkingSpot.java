@@ -39,6 +39,10 @@ public abstract class ParkingSpot {
         this.isOccupied = false;
     }
 
+    public Vehicle getVehicle() {
+        return this.currentVehicle;
+    }
+    
     @Override
     public String toString() {
         return spotID + " [" + this.getClass().getSimpleName() + "] - Rate: RM" + hourlyRate;

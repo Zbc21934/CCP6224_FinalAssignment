@@ -17,4 +17,9 @@ public class Car extends Vehicle{
     public boolean canParkIn(ParkingSpot spot) {
         return (spot instanceof CompactSpot) || (spot instanceof RegularSpot);
     }
+    
+    @Override
+    public double getHourlyRate() {
+        return 5.0; // price/hours
+    }
 }

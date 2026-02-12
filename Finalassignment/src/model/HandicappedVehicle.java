@@ -17,4 +17,9 @@ public class HandicappedVehicle extends Vehicle{
     public boolean canParkIn(ParkingSpot spot) {
         return true; // can park any spot
     }
+    
+    @Override
+    public double getHourlyRate() {
+        return 2.0; 
+    }
 }

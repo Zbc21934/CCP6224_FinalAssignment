@@ -1,8 +1,6 @@
 package controller;
 
-import model.ParkingLot;
-import model.Vehicle;
-import model.ParkingSpot;
+import model.*;
 import database.DbConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,11 +9,11 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.format.DateTimeFormatter;
 
 public class ParkingSystemFacade {
     
     private ParkingLot parkingLot;
-    
     private Connection conn;
 
     public ParkingSystemFacade() {
@@ -27,13 +25,13 @@ public class ParkingSystemFacade {
         loadActiveTickets();  // Restore the parking state from the database
     }
 
-    public boolean parkVehicle(String plateNumber, String vehicleType, String spotId) {
+    public Ticket parkVehicle(String plateNumber, String vehicleType, String spotId) {
   
         // Step 1: find spot
         ParkingSpot spot = parkingLot.getSpotById(spotId);
         if (spot == null) {
             System.out.println("Error: Spot not found.");
-            return false;
+            return null;
         }
 
         // Step 2: use static method of vehicle
@@ -42,38 +40,95 @@ public class ParkingSystemFacade {
             vehicle = Vehicle.create(plateNumber, vehicleType);
         } catch (IllegalArgumentException e) {
             System.out.println("Error: Invalid vehicle type.");
-            return false;
+            return null;
         }
 
         // Step 3: check logic: vehicle can park or not
         if (!vehicle.canParkIn(spot)) {
             System.out.println("Validation Failed: " + vehicleType + " cannot park in " + spot.getClass().getSimpleName());
-            return false;
+            return null;
         }
-        
-        String ticketId = "T-" + System.currentTimeMillis();
-        LocalDateTime entryTime = LocalDateTime.now();
+       //builder
+      Ticket ticket = new Ticket.Builder(plateNumber, spotId)
+                            .setVehicleType(vehicleType)
+                            .build();
+     
+        String sql = "INSERT INTO tickets (ticket_id, plate_number, vehicle_type, spot_id, entry_time, status) VALUES (?, ?, ?, ?, ?, 'ACTIVE')";
 
-        String sql = "INSERT INTO tickets (ticket_id, plate_number, vehicle_type, spot_id, entry_time, status) " +
-                     "VALUES (?, ?, ?, ?, ?, 'ACTIVE')";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, ticket.getTicketId()); 
+                pstmt.setString(2, ticket.getPlateNumber());
+                pstmt.setString(3, ticket.getVehicleType());
+                pstmt.setString(4, ticket.getSpotId());
+                pstmt.setString(5, ticket.getEntryTime().toString());
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, ticketId);
-            pstmt.setString(2, plateNumber);
-            pstmt.setString(3, vehicleType);
-            pstmt.setString(4, spotId);
-            pstmt.setString(5, entryTime.toString()); 
+                int rows = pstmt.executeUpdate();
 
-            int rows = pstmt.executeUpdate();
-            
-            if (rows > 0) {
-                System.out.println("Database Insert Success: " + plateNumber);
-                //  parkingLot.getSpot(spotId).occupy(); 
-                spot.assignVehicle(vehicle); // refresh status in db
-                return true;
+                if (rows > 0) {
+                    spot.assignVehicle(vehicle); //refresh db
+                    return ticket;
+                }
+            } catch (SQLException e) {
+                System.out.println("❌ DB Check-in Error: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            System.out.println("DB error; Check-in Error: " + e.getMessage());
+            return null; 
+        }
+
+    //vehicle checkout
+    public String checkOutVehicle(String plateNumber) {
+        try {
+            String sql = "SELECT * FROM tickets WHERE plate_number = ? AND status = 'ACTIVE'";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, plateNumber);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String ticketId = rs.getString("ticket_id");
+                LocalDateTime entryTime = LocalDateTime.parse(rs.getString("entry_time"));
+                String type = rs.getString("vehicle_type");
+                String spotId = rs.getString("spot_id");
+
+                Vehicle vehicle = Vehicle.create(plateNumber, type);
+                ParkingSpot spot = parkingLot.getSpotById(spotId); 
+
+                double parkingFee = FeeCalculator.calculate(vehicle, spot, entryTime);
+                long hours = FeeCalculator.getDurationInHours(entryTime);
+
+                //check fine
+                //double fines = checkUnpaidFines(plateNumber);
+                //double totalDue = parkingFee + fines;
+
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+               return String.format(
+                    "<html>" +
+                    "<h3>--- EXIT RECEIPT ---</h3>" +
+                    "<b>Ticket ID:</b> %s<br>" +
+                    "<b>Type:</b> %s<br>" +
+                    "<b>Parking Hours:</b> %d hrs<br>" +
+                    "------------------------------<br>" +
+                    "<b>Parking Fee:</b> RM %.2f<br>" +
+                    "------------------------------<br>" +
+                    "<b>TOTAL DUE:</b> <span style='color:blue; font-size:14px'>RM %.2f</span>" +
+                    "</html>", 
+                    ticketId, type, (int)hours, parkingFee, parkingFee 
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "Vehicle not found.";
+    }
+
+    public boolean processPayment(String plateNumber) {
+        PaymentService paymentService = new PaymentService();
+        String spotId = paymentService.getSpotIdByPlate(plateNumber);
+    
+        boolean isPaid = paymentService.processPayment(plateNumber);
+
+        if (isPaid && spotId != null) {
+            ParkingSpot spot = parkingLot.getSpotById(spotId);
+            if (spot != null) spot.removeVehicle(); 
+            return true;
         }
         return false;
     }

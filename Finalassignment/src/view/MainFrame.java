@@ -3,6 +3,8 @@ package view;
 import controller.ParkingSystemFacade;
 import model.Floor;
 import model.ParkingSpot;
+import model.Vehicle;
+import model.Ticket;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -110,14 +112,32 @@ public class MainFrame extends JFrame {
     private void showSpotDetails(ParkingSpot spot) {
         // 1. if occupied, show dialog
         if (spot.isOccupied()) {
-            String message = "Spot ID: " + spot.getSpotID() + "\n"
-                    + "Status: Occupied\n"
-                    + "Type: " + spot.getClass().getSimpleName() + "\n"
-                    + "Hourly Rate: RM " + spot.getHourlyRate();
-            JOptionPane.showMessageDialog(this, message, "Spot Occupied", JOptionPane.INFORMATION_MESSAGE);
+            Vehicle v = spot.getVehicle();
+        
+            String plate = (v != null) ? v.getLicensePlate() : "Unknown";
+
+            String message = "<html><b>Spot ID:</b> " + spot.getSpotID() + "<br>"
+                    + "<b>Status:</b> Occupied<br>"
+                    + "<b>Plate:</b> " + plate + "<br>"
+                    + "<b>Type:</b> " + spot.getClass().getSimpleName().replace("Spot", "") + "<br>"
+                    + "<b>Rate:</b> RM " + spot.getHourlyRate() + "/hr</html>";
+
+            Object[] options = {"Check Out & Pay", "Cancel"};
+
+            int choice = JOptionPane.showOptionDialog(this,
+                    message, 
+                    "Spot Occupied",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.INFORMATION_MESSAGE,
+                    null,
+                    options,
+                    options[0]);
+
+            if (choice == 0) {
+                performCheckOut(plate);
+            }
             return;
         }
-
         // 2. if empty, show menu
         JPanel panel = new JPanel(new GridLayout(0, 1));
         panel.add(new JLabel("Spot ID: " + spot.getSpotID() + " (" + spot.getClass().getSimpleName() + ")"));
@@ -145,15 +165,42 @@ public class MainFrame extends JFrame {
                 return;
             }
 
-            // --- Facade ---
-            // parkVehicle use Vehicle.create() to do vertification
-            boolean success = parkingSystem.parkVehicle(plate, type, spot.getSpotID());
+        
+           Ticket ticket = parkingSystem.parkVehicle(plate, type, spot.getSpotID());
 
-            if (success) {
-                JOptionPane.showMessageDialog(this, "Vehicle Parked Successfully!");
-                loadFloor(parkingSystem.getParkingLot().getFloors().get(0)); 
+           if (ticket != null) { 
+            String ticketMsg = "<html>" +
+                "<h3>Entry Success!</h3>" +
+                "<b>Ticket ID:</b> " + ticket.getTicketId() + "<br>" +
+                "<b>Spot:</b> " + ticket.getSpotId() + "<br>" +
+                "<b>Entry Time:</b> " + ticket.getEntryTime().toString() + "<br>" +
+                "</html>";
+            
+            JOptionPane.showMessageDialog(this, ticketMsg, "Parking Ticket", JOptionPane.INFORMATION_MESSAGE);
+            
+            loadFloor(parkingSystem.getParkingLot().getFloors().get(0));
+        } else {
+            JOptionPane.showMessageDialog(this, "Parking Failed! Please check vehicle rules.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        }
+    }
+    
+    private void performCheckOut(String plateNumber) {
+        String bill = parkingSystem.checkOutVehicle(plateNumber);
+
+        int payChoice = JOptionPane.showConfirmDialog(this, 
+                bill + "\n\nConfirm Payment?", 
+                "Payment Confirmation", 
+                JOptionPane.YES_NO_OPTION);
+
+        if (payChoice == JOptionPane.YES_OPTION) {
+            boolean paid = parkingSystem.processPayment(plateNumber);
+            
+            if (paid) {
+                JOptionPane.showMessageDialog(this, "Payment Successful! Gate Opened.");
+                loadFloor(parkingSystem.getParkingLot().getFloors().get(0));
             } else {
-                JOptionPane.showMessageDialog(this, "Parking Failed! (Check vehicle type rules)", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Payment Failed!", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
