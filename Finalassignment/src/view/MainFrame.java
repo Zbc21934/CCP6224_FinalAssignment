@@ -35,8 +35,7 @@ public class MainFrame extends JFrame {
         tabbedPane.addTab("Parking Lot View", visualPanel);
 
         // Tab 2: Reports
-        JPanel reportPanel = new JPanel();
-        reportPanel.add(new JLabel("Reports & Revenue Panel"));
+        JPanel reportPanel = createReportPanel();
         tabbedPane.addTab("Reports", reportPanel);
 
         add(tabbedPane);
@@ -152,7 +151,7 @@ public class MainFrame extends JFrame {
                     + "<b>Type:</b> " + spot.getClass().getSimpleName().replace("Spot", "") + "<br>"
                     + "<b>Rate:</b> RM " + spot.getHourlyRate() + "/hrs</html>";
 
-            Object[] options = {"Check Out & Pay", "Cancel"};
+            Object[] options = {"Cancel"};
 
             int choice = JOptionPane.showOptionDialog(this,
                     message,
@@ -162,10 +161,6 @@ public class MainFrame extends JFrame {
                     null,
                     options,
                     options[0]);
-
-            if (choice == 0) {
-                performCheckOut(plate);
-            }
             return;
         }
         // 2. if empty, show menu
@@ -246,6 +241,42 @@ public class MainFrame extends JFrame {
             }
         }
     }
+    
+    
+   private JPanel createReportPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        // Selection Row
+        JPanel navBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        navBar.setBackground(new Color(240, 240, 240));
+
+        // Report Button
+        JButton btnOcc = new JButton("Occupancy Report ");
+        JButton btnRev = new JButton("Revenue Report ");
+        JButton btnVeh = new JButton("Currently Vehicles in the Lot ");
+        JButton btnFine = new JButton("Fine Report");
+        navBar.add(btnOcc);
+        navBar.add(btnRev);
+        navBar.add(btnVeh);
+        navBar.add(btnFine);
+        
+        // text areaa
+        JTextArea reportArea = new JTextArea();
+        reportArea.setFont(new Font("Monospaced", Font.PLAIN, 15));
+        reportArea.setEditable(false);
+        reportArea.setMargin(new Insets(20, 20, 20, 20));
+        JScrollPane scrollPane = new JScrollPane(reportArea);
+
+        // button logic call controller
+        btnOcc.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("OCCUPANCY")));
+        btnRev.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("REVENUE")));
+        btnVeh.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("VEHICLES")));
+        panel.add(navBar, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        
+        return panel;
+    }
+    
     // Create a styled button
     private JButton createStyledButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text);

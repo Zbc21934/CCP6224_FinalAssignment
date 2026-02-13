@@ -13,6 +13,7 @@ public class ParkingSystemFacade {
     private ParkingLot parkingLot;
     private Connection conn;
     private PaymentService paymentService;
+    private ReportService reportService;
 
     public ParkingSystemFacade() {
         this.parkingLot = new ParkingLot("University Parking");
@@ -20,9 +21,23 @@ public class ParkingSystemFacade {
 
         this.conn = DbConnection.getInstance().getConnection();
         this.paymentService = new PaymentService();
+        
+        this.paymentService = new PaymentService();
+        this.reportService = new ReportService(this.conn, this.parkingLot);
         loadActiveTickets();  // Restore the parking state from the database
     }
 
+    
+    public String getDashboardReport(String reportType) {
+        switch(reportType) {
+            case "OCCUPANCY": return reportService.getOccupancySummary();
+            case "REVENUE"  : return reportService.getRevenueSummary();
+            case "VEHICLES" : return reportService.getActiveVehicleTable();
+            case "FINES"    : return reportService.getFineReport();
+            default         : return reportService.getOccupancySummary() + "\n\n" + reportService.getRevenueSummary();
+        }
+    }
+    
     public Ticket parkVehicle(String plateNumber, String vehicleType, String spotId, boolean isHandicapped) {
 
         // Step 1: find spot
@@ -131,5 +146,92 @@ public class ParkingSystemFacade {
         } catch (IllegalArgumentException e) {
             System.out.println("Found unknown vehicle type in DB, skipping.");
         }
+    }
+    
+    //REPORT GENERATION
+    public String generateDashboardReport() {
+        StringBuilder report = new StringBuilder();
+        report.append("=========================================\n");
+        report.append("       UNIVERSITY PARKING DASHBOARD      \n");
+        report.append("=========================================\n\n");
+
+        try {
+            //oCCUPANCY REPORT
+            // -------------------
+            String countSql = "SELECT COUNT(*) AS total FROM tickets WHERE status = 'ACTIVE'";
+            Statement stmt = conn.createStatement();
+            ResultSet rsCount = stmt.executeQuery(countSql);
+            int activeVehicles = 0;
+            if (rsCount.next()) {
+                activeVehicles = rsCount.getInt("total");
+            }
+            int totalSpots = 100; // 5 floors * 20 spots
+            double occupancyRate = (double) activeVehicles / totalSpots * 100;
+            
+            report.append("[1] OCCUPANCY REPORT\n");
+            report.append("--------------------\n");
+            report.append(String.format("Total Spots:    %d\n", totalSpots));
+            report.append(String.format("Occupied Spots: %d\n", activeVehicles));
+            report.append(String.format("Available:      %d\n", (totalSpots - activeVehicles)));
+            report.append(String.format("Occupancy Rate: %.2f%%\n\n", occupancyRate));
+
+
+            // REVENUE REPORT
+            String revSql = "SELECT SUM(total_amount) AS total_rev FROM payments";
+            ResultSet rsRev = stmt.executeQuery(revSql);
+            double totalRevenue = 0.0;
+            if (rsRev.next()) {
+                totalRevenue = rsRev.getDouble("total_rev");
+            }
+            report.append("[2] REVENUE REPORT\n");
+            report.append("------------------\n");
+            report.append(String.format("Total Revenue Collected: RM %.2f\n\n", totalRevenue));
+
+
+            //  LIST OF VEHICLES (CURRENTLY IN LOT)
+            report.append("[3] CURRENT VEHICLES IN LOT\n");
+            report.append("---------------------------\n");
+            report.append(String.format("%-15s %-15s %-10s %-20s\n", "Plate No.", "Type", "Spot", "Entry Time"));
+            report.append("------------------------------------------------------------\n");
+            
+            String vehicleSql = "SELECT plate_number, vehicle_type, spot_id, entry_time FROM tickets WHERE status = 'ACTIVE' ORDER BY entry_time DESC";
+            ResultSet rsVeh = stmt.executeQuery(vehicleSql);
+            boolean hasVehicles = false;
+            while (rsVeh.next()) {
+                hasVehicles = true;
+                String time = rsVeh.getString("entry_time").substring(11, 19);
+                report.append(String.format("%-15s %-15s %-10s %-20s\n", 
+                        rsVeh.getString("plate_number"),
+                        rsVeh.getString("vehicle_type"),
+                        rsVeh.getString("spot_id"),
+                        time));
+            }
+            if (!hasVehicles) report.append("No vehicles currently parked.\n");
+            report.append("\n");
+
+
+            // OUTSTANDING FINES REPORT
+            report.append("[4] OUTSTANDING FINES (UNPAID)\n");
+            report.append("------------------------------\n");
+            report.append(String.format("%-15s %-10s %-20s\n", "Plate No.", "Amount", "Reason"));
+            report.append("--------------------------------------------------\n");
+            
+            String fineSql = "SELECT plate_number, amount, reason FROM fines WHERE status = 'UNPAID'";
+            ResultSet rsFines = stmt.executeQuery(fineSql);
+            boolean hasFines = false;
+            while (rsFines.next()) {
+                hasFines = true;
+                report.append(String.format("%-15s RM %-7.2f %-20s\n", 
+                        rsFines.getString("plate_number"),
+                        rsFines.getDouble("amount"),
+                        rsFines.getString("reason")));
+            }
+            if (!hasFines) report.append("No outstanding fines.\n");
+
+        } catch (SQLException e) {
+            report.append("Error generating report: " + e.getMessage());
+        }
+
+        return report.toString();
     }
 }
