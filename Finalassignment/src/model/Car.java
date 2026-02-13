@@ -15,7 +15,7 @@ public class Car extends Vehicle{
     }
     
     public boolean canParkIn(ParkingSpot spot) {
-        return (spot instanceof CompactSpot) || (spot instanceof RegularSpot);
+        return spot instanceof CompactSpot || spot instanceof RegularSpot || spot instanceof ReservedSpot;
     }
     
     @Override

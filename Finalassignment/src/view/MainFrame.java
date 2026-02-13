@@ -180,7 +180,11 @@ public class MainFrame extends JFrame {
         JComboBox<String> typeBox = new JComboBox<>(vehicleTypes);
         panel.add(new JLabel("Select Vehicle Type:"));
         panel.add(typeBox);
-
+        
+        //handicapped check box
+        JCheckBox handicappedCheckBox = new JCheckBox("Handicapped Card Holder?");
+        panel.add(handicappedCheckBox);
+        
         // 3. confirmDialog (OK / Cancel)
         int result = JOptionPane.showConfirmDialog(null, panel, "Park Vehicle",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -189,14 +193,14 @@ public class MainFrame extends JFrame {
         if (result == JOptionPane.OK_OPTION) {
             String plate = plateField.getText().trim();
             String type = (String) typeBox.getSelectedItem();
-
+            boolean isHandicapped = handicappedCheckBox.isSelected();
+            
             if (plate.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "License plate cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-
-            Ticket ticket = parkingSystem.parkVehicle(plate, type, spot.getSpotID());
-
+            Ticket ticket = parkingSystem.parkVehicle(plate, type, spot.getSpotID(), isHandicapped);
+            
             if (ticket != null) {
                 String ticketMsg = "<html>"
                         + "<h3>✅ Entry Success!</h3>"

@@ -16,7 +16,7 @@ public class Motorcycle extends Vehicle{
 
     
     public boolean canParkIn(ParkingSpot spot) {
-        return spot instanceof CompactSpot;
+        return spot instanceof CompactSpot || spot instanceof ReservedSpot;
     }
     
     @Override

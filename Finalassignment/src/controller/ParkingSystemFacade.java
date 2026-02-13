@@ -23,7 +23,7 @@ public class ParkingSystemFacade {
         loadActiveTickets();  // Restore the parking state from the database
     }
 
-    public Ticket parkVehicle(String plateNumber, String vehicleType, String spotId) {
+    public Ticket parkVehicle(String plateNumber, String vehicleType, String spotId, boolean isHandicapped) {
 
         // Step 1: find spot
         ParkingSpot spot = parkingLot.getSpotById(spotId);
@@ -46,20 +46,16 @@ public class ParkingSystemFacade {
             System.out.println("Validation Failed: " + vehicleType + " cannot park in " + spot.getClass().getSimpleName());
             return null;
         }
-        //builder
-        Ticket ticket = new Ticket.Builder(plateNumber, spotId)
-                .setVehicleType(vehicleType)
-                .build();
-
-        String sql = "INSERT INTO tickets (ticket_id, plate_number, vehicle_type, spot_id, entry_time, status) VALUES (?, ?, ?, ?, ?, 'ACTIVE')";
-
+        
+        Ticket ticket = Ticket.createEntryTicket(plateNumber, spotId, vehicleType, isHandicapped);
+        String sql = "INSERT INTO tickets (ticket_id, plate_number, vehicle_type, spot_id, entry_time, status, is_handicapped) VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, ticket.getTicketId());
             pstmt.setString(2, ticket.getPlateNumber());
             pstmt.setString(3, ticket.getVehicleType());
             pstmt.setString(4, ticket.getSpotId());
             pstmt.setString(5, ticket.getEntryTime().toString());
-
+            pstmt.setInt(6, isHandicapped ? 1 : 0);
             int rows = pstmt.executeUpdate();
 
             if (rows > 0) {

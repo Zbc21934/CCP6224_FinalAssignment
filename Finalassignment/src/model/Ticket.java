@@ -4,53 +4,35 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Ticket {
-    private final String ticketId;
-    private final String plateNumber;
-    private final String vehicleType; 
-    private final String spotId;
-    private final LocalDateTime entryTime;
+    private String ticketId;
+    private String plateNumber;
+    private String spotId;
+    private String vehicleType;
+    private LocalDateTime entryTime;
+    private boolean handicappedCardHolder; 
 
-    private Ticket(Builder builder) {
-        this.plateNumber = builder.plateNumber;
-        this.vehicleType = builder.vehicleType;
-        this.spotId = builder.spotId;
+    private Ticket(String plateNumber, String spotId, String vehicleType, boolean isHandicapped) {
+        this.ticketId = "T-" + plateNumber + "-" + System.currentTimeMillis();
+        this.plateNumber = plateNumber;
+        this.spotId = spotId;
+        this.vehicleType = vehicleType;
         this.entryTime = LocalDateTime.now();
-        
-        // autogenerate Ticket number
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-        this.ticketId = "T-" + plateNumber + "-" + this.entryTime.format(fmt);
+        this.handicappedCardHolder = isHandicapped;
     }
 
-    // Getters
+    public static Ticket createEntryTicket(String plateNumber, String spotId, String vehicleType, boolean isHandicapped) {
+        return new Ticket(plateNumber, spotId, vehicleType, isHandicapped);
+    }
+
+    //getter
     public String getTicketId() { return ticketId; }
     public String getPlateNumber() { return plateNumber; }
-    public String getVehicleType() { return vehicleType; }
     public String getSpotId() { return spotId; }
+    public String getVehicleType() { return vehicleType; }
     public LocalDateTime getEntryTime() { return entryTime; }
+    public boolean isHandicappedCardHolder() { return handicappedCardHolder; }
 
     public String getFormattedEntryTime() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return this.entryTime.format(formatter);
-}
-    // Builder Pattern 
-    public static class Builder {
-        private String plateNumber;
-        private String vehicleType;
-        private String spotId;
-
-        public Builder(String plateNumber, String spotId) {
-            this.plateNumber = plateNumber;
-            this.spotId = spotId;
-        }
-
-        public Builder setVehicleType(String vehicleType) {
-            this.vehicleType = vehicleType;
-            return this;
-        }
-
-        public Ticket build() {
-            return new Ticket(this);
-        }
-        
+        return entryTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 }
