@@ -5,7 +5,6 @@ import model.Floor;
 import model.ParkingSpot;
 import model.Vehicle;
 import model.Ticket;
-import view.ReceiptDialog;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -16,19 +15,6 @@ public class MainFrame extends JFrame {
     private ParkingSystemFacade parkingSystem;
     private JPanel spotsPanel;
     private JLabel currentFloorLabel;
-
-    // Flat UI Colors
-    // green mean available
-    private static final Color COLOR_AVAILABLE = new Color(46, 204, 113);
-    // red mean noavailable
-    private static final Color COLOR_OCCUPIED = new Color(231, 76, 60);
-    // orange is for exit button
-    private static final Color COLOR_EXIT = new Color(243, 156, 18);
-    // for the title
-    private static final Color COLOR_PRIMARY = new Color(52, 152, 219);
-    // font
-    private static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 24);
-    private static final Font FONT_BTN = new Font("Segoe UI", Font.BOLD, 14);
 
     public MainFrame() {
         // Initialize the Backend
@@ -235,31 +221,26 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Vehicle not found or already paid!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        int payChoice = JOptionPane.showConfirmDialog(this,
-                bill + "\n\nConfirm Payment?",
-                "Payment Confirmation",
-                JOptionPane.YES_NO_OPTION);
+        PaymentDialog payDialog = new PaymentDialog(this, bill);
+        payDialog.setVisible(true);
+       String method = payDialog.getSelectedMethod();
 
-        if (payChoice == JOptionPane.YES_OPTION) {
-            boolean paid = parkingSystem.processPayment(plateNumber);
+        if (method != null) { 
+            boolean paid = parkingSystem.processPayment(plateNumber, method);
 
             if (paid) {
-                // ✅ Payment Success! Generate Final Receipt
-                // Replace text to make it look like a final receipt
-                String finalReceiptHtml = bill.replace("EXIT RECEIPT", "OFFICIAL RECEIPT")
-                        .replace("TOTAL DUE", "AMOUNT PAID")
-                        .replace("blue", "green"); // Change color to green
+                String finalReceipt = parkingSystem.generateOfficialReceipt(plateNumber);
+                finalReceipt += "<br><center>Thank you for parking with us!</center>";
 
-                // 🟢 Show the new ReceiptDialog
-                new ReceiptDialog(this, finalReceiptHtml).setVisible(true);
+                new ReceiptDialog(this, finalReceipt).setVisible(true);
 
-                // Refresh UI
-                loadFloor(parkingSystem.getParkingLot().getFloors().get(0));
+                if (!parkingSystem.getParkingLot().getFloors().isEmpty()) {
+                    loadFloor(parkingSystem.getParkingLot().getFloors().get(0));
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Payment Failed!", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
-
     }
     // Create a styled button
     private JButton createStyledButton(String text, Color bg, Color fg) {

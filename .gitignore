@@ -26,3 +26,4 @@ replay_pid*
 /Finalassignment/build/
 /Finalassignment/dist/
 Finalassignment/parking_lot.db
+Finalassignment/src/model/ParkingSpot.java
