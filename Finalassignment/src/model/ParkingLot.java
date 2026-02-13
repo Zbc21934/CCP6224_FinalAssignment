@@ -55,6 +55,14 @@ public class ParkingLot {
         return null; // can't find
     }
 
+    public int getTotalCapacity() {
+    int total = 0;
+    for (Floor floor : floors) {
+        total += floor.getSpots().size();
+    }
+    return total;
+}
+    
     public String getName() { return name; }
     public List<Floor> getFloors() { return floors; }
 }
