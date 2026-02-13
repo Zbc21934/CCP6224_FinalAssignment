@@ -5,11 +5,8 @@ import database.DbConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.time.format.DateTimeFormatter;
 
 public class ParkingSystemFacade {
 
@@ -70,7 +67,7 @@ public class ParkingSystemFacade {
                 return ticket;
             }
         } catch (SQLException e) {
-            System.out.println("❌ DB Check-in Error: " + e.getMessage());
+            System.out.println("DB Check-in Error: " + e.getMessage());
         }
         return null;
     }
@@ -108,7 +105,7 @@ public class ParkingSystemFacade {
     }
 
     private void loadActiveTickets() {
-        System.out.println("🔄 Loading active tickets from database...");
+        System.out.println("Loading active tickets from database...");
 
         // Query only for vehicles that are still parked (status = 'ACTIVE')
         String sql = "SELECT spot_id, plate_number, vehicle_type FROM tickets WHERE status = 'ACTIVE'";
@@ -130,13 +127,13 @@ public class ParkingSystemFacade {
                     // 3. Re-assign the vehicle to the spot in memory
                     spot.assignVehicle(vehicle);
 
-                    System.out.println("✅ Restored: " + plate + " at " + spotId);
+                    System.out.println("Restored: " + plate + " at " + spotId);
                 }
             }
         } catch (SQLException e) {
-            System.out.println("❌ Error loading active tickets: " + e.getMessage());
+            System.out.println("Error loading active tickets: " + e.getMessage());
         } catch (IllegalArgumentException e) {
-            System.out.println("⚠️ Found unknown vehicle type in DB, skipping.");
+            System.out.println("Found unknown vehicle type in DB, skipping.");
         }
     }
 }

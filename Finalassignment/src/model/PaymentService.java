@@ -25,7 +25,7 @@ public class PaymentService {
         try {
             // if paid，check status；unpaid check active status
             String status = isPaid ? "PAID" : "ACTIVE";
-            String sql = "SELECT * FROM tickets WHERE plate_number = ? AND status = ?";
+String sql = "SELECT * FROM tickets WHERE plate_number = ? AND status = ? ORDER BY entry_time DESC LIMIT 1";
 
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, plateNumber);
