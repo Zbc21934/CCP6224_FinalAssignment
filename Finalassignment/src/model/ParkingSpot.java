@@ -49,28 +49,3 @@ public abstract class ParkingSpot {
     }
 }
 
-// 2. The Subclasses (Non-public, so they can live in the same file)
-
-class CompactSpot extends ParkingSpot {
-    public CompactSpot(String spotID) {
-        super(spotID, 2.0); // RM 2/hour
-    }
-}
-
-class RegularSpot extends ParkingSpot {
-    public RegularSpot(String spotID) {
-        super(spotID, 5.0); // RM 5/hour
-    }
-}
-
-class HandicappedSpot extends ParkingSpot {
-    public HandicappedSpot(String spotID) {
-        super(spotID, 2.0); // RM 2/hour
-    }
-}
-
-class ReservedSpot extends ParkingSpot {
-    public ReservedSpot(String spotID) {
-        super(spotID, 10.0); // RM 10/hour
-    }
-}
