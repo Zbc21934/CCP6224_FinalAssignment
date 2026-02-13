@@ -47,15 +47,42 @@ public class ReportService {
     }
 
     public String getRevenueSummary() {
-        try {
-            String sql = "SELECT SUM(total_amount) AS total_rev FROM payments";
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            double total = rs.next() ? rs.getDouble("total_rev") : 0.0;
-            return String.format("--- REVENUE ---\nTotal Collections: RM %.2f", total);
-        } catch (SQLException e) {
-            return "Error: " + e.getMessage();
+    try {
+        Statement stmt = conn.createStatement();
+        
+        String revSql = "SELECT SUM(total_amount) AS total, COUNT(*) AS count FROM payments";
+        ResultSet rsRev = stmt.executeQuery(revSql);
+        double totalRevenue = 0.0;
+        int transactionCount = 0;
+        if (rsRev.next()) {
+            totalRevenue = rsRev.getDouble("total");
+            transactionCount = rsRev.getInt("count");
         }
+
+        double avgRevenue = (transactionCount > 0) ? totalRevenue / transactionCount : 0.0;
+        StringBuilder sb = new StringBuilder();
+        sb.append("------------------------------------------\n");
+        sb.append("             --- REVENUE ---              \n");
+        sb.append("------------------------------------------\n");
+        sb.append(String.format("%-18s: RM %.2f\n", "Total Collected", totalRevenue));
+        sb.append(String.format("%-18s: %d\n", "Total Transactions", transactionCount));
+        sb.append(String.format("%-18s: RM %.2f\n", "Avg per Vehicle", avgRevenue));
+        sb.append("------------------------------------------\n");
+        sb.append("\nPayment Methods:\n");
+        String methodSql = "SELECT payment_method, SUM(total_amount) as amt FROM payments GROUP BY payment_method";
+        ResultSet rsMethod = stmt.executeQuery(methodSql);
+        while (rsMethod.next()) {
+            sb.append(String.format("- %-12s: RM %.2f\n", 
+                    rsMethod.getString("payment_method"), rsMethod.getDouble("amt")));
+        }
+        
+        sb.append("------------------------------------------\n");
+        
+        return sb.toString();
+    } catch (SQLException e) {
+        return "Error generating revenue report: " + e.getMessage();
     }
+}
 
     public String getActiveVehicleTable() {
         StringBuilder sb = new StringBuilder("--- CURRENT VEHICLES ---\n");
