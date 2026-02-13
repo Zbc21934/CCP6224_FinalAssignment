@@ -13,11 +13,11 @@ public class ParkingSystemFacade {
     private ParkingLot parkingLot;
     private Connection conn;
     private PaymentService paymentService;
-<<<<<<< HEAD
+
     private FineManager fineManager;
-=======
+
     private ReportService reportService;
->>>>>>> 9ea8239b49a865455fa598dd447606f488764caa
+
 
     public ParkingSystemFacade() {
         this.parkingLot = new ParkingLot("University Parking");
@@ -25,13 +25,13 @@ public class ParkingSystemFacade {
 
         this.conn = DbConnection.getInstance().getConnection();
         this.paymentService = new PaymentService();
-<<<<<<< HEAD
+
         this.fineManager = new FineManager();
-=======
+
         
         this.paymentService = new PaymentService();
         this.reportService = new ReportService(this.conn, this.parkingLot);
->>>>>>> 9ea8239b49a865455fa598dd447606f488764caa
+
         loadActiveTickets();  // Restore the parking state from the database
     }
 
@@ -156,7 +156,7 @@ public class ParkingSystemFacade {
         }
     }
     
-<<<<<<< HEAD
+
     // Method called by Admin Panel to change Scheme
     public void updateFineScheme(String schemeType) {
         fineManager.updateFineScheme(schemeType);
@@ -182,7 +182,7 @@ public class ParkingSystemFacade {
         double fine = fineManager.calculateFine(durationHours, isReservedMisuse);
         
         return parkingFee + fine;
-=======
+
     //REPORT GENERATION
     public String generateDashboardReport() {
         StringBuilder report = new StringBuilder();
@@ -268,6 +268,5 @@ public class ParkingSystemFacade {
         }
 
         return report.toString();
->>>>>>> 9ea8239b49a865455fa598dd447606f488764caa
     }
 }
