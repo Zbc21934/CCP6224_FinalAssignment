@@ -73,7 +73,8 @@ public class DbConnection {
                     + "entry_time TEXT NOT NULL, "   
                     + "exit_time TEXT, "                 
                     + "fee_amount REAL DEFAULT 0.0, "    
-                    + "status TEXT DEFAULT 'ACTIVE', "   
+                    + "status TEXT DEFAULT 'ACTIVE', " 
+                    + "is_handicapped INTEGER DEFAULT 0, "
                     + "FOREIGN KEY(spot_id) REFERENCES parking_spots(spot_id)"
                     + ");";
 
