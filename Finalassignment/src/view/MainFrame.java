@@ -107,30 +107,38 @@ public class MainFrame extends JFrame {
         return container;
     }
 
-    private void loadFloor(Floor floor) {
+private void loadFloor(Floor floor) {
         currentFloorLabel.setText("Viewing: " + floor.getFloorID());
         spotsPanel.removeAll();
 
-        // 5 columns grid
+        // 1. Set Grid to 5 Columns (matches your 5 spots per row)
         spotsPanel.setLayout(new GridLayout(0, 5, 15, 15));
 
         for (ParkingSpot spot : floor.getSpots()) {
             JButton spotBtn = new JButton();
 
+            // Get simple name (e.g., "Compact" instead of "CompactSpot")
+            String spotType = spot.getClass().getSimpleName().replace("Spot", "");
+            
             // HTML for multi-line button text
             String btnText = "<html><center><b>" + spot.getSpotID() + "</b><br/>"
-                    + spot.getClass().getSimpleName().replace("Spot", "") + "</center></html>";
+                    + spotType + "</center></html>";
             spotBtn.setText(btnText);
 
-            spotBtn.setPreferredSize(new Dimension(150, 80));
+            // 2. Adjust button size slightly to look good in the new grid
+            spotBtn.setPreferredSize(new Dimension(140, 80));
             spotBtn.setFont(new Font("Arial", Font.PLAIN, 12));
 
+            // Color Logic
             if (spot.isOccupied()) {
-                spotBtn.setBackground(new Color(255, 100, 100)); // Red
+                spotBtn.setBackground(new Color(231, 76, 60)); // Red (Occupied)
+                spotBtn.setForeground(Color.WHITE);
             } else {
-                spotBtn.setBackground(new Color(144, 238, 144)); // Green
+                spotBtn.setBackground(new Color(46, 204, 113)); // Green (Available)
+                spotBtn.setForeground(Color.BLACK);
             }
 
+            // Add click listener
             spotBtn.addActionListener(e -> showSpotDetails(spot));
             spotsPanel.add(spotBtn);
         }

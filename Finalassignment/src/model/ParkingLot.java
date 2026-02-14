@@ -1,4 +1,4 @@
-package model; // Inside the ParkingLot package
+package model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,31 +13,45 @@ public class ParkingLot {
     }
 
     public void initialize(int numFloors, int spotsPerFloor) {
-        int spotsPerRow = 10; // Let's assume 10 spots make 1 row
+        // 1. Set spots per row to 5 (This creates 4 rows total: 20 / 5 = 4)
+        int spotsPerRow = 5; 
+
+        // Calculate total rows dynamically (e.g., 20 spots / 5 = 4 rows)
+        int totalRows = (spotsPerFloor + spotsPerRow - 1) / spotsPerRow;
 
         for (int i = 1; i <= numFloors; i++) {
             String floorID = "Floor " + i;
             Floor floor = new Floor(floorID);
 
             for (int j = 1; j <= spotsPerFloor; j++) {
-                // Logic to calculate Row and Spot number within that row
+                // Calculate Row and Spot Number
                 int rowNum = ((j - 1) / spotsPerRow) + 1;
                 int spotNum = ((j - 1) % spotsPerRow) + 1;
 
-                // New ID Format: F1-R1-S1
+                // ID Format: F1-R1-S1
                 String spotID = "F" + i + "-R" + rowNum + "-S" + spotNum;
                 
                 ParkingSpot spot;
-                // Distribute types (Same percentages as before)
-                if (j <= spotsPerFloor * 0.2) {
-                    spot = new CompactSpot(spotID);
-                } else if (j <= spotsPerFloor * 0.7) {
-                    spot = new RegularSpot(spotID);
-                } else if (j <= spotsPerFloor * 0.8) {
-                    spot = new HandicappedSpot(spotID);
-                } else {
+
+                // --- NEW LAYOUT LOGIC ---
+                if (i == 1) {
+                    // Rule 1: Floor 1 is ALL Reserved
                     spot = new ReservedSpot(spotID);
+                } else {
+                    // Rule 2: Floor 2+
+                    if (rowNum == 1) {
+                        // Row 1: Compact
+                        spot = new CompactSpot(spotID);
+                    } else if (rowNum == totalRows) { // Row 4 (The last row)
+                        // Last Row: Handicapped
+                        spot = new HandicappedSpot(spotID);
+                    } else {
+                        // Middle Rows (Row 2 & 3): Regular
+                        spot = new RegularSpot(spotID);
+                    }
                 }
+                // ------------------------
+
                 floor.addSpot(spot);
             }
             floors.add(floor);
@@ -55,14 +69,15 @@ public class ParkingLot {
         return null; // can't find
     }
 
+    // This method fixes the error in ReportService
     public int getTotalCapacity() {
-    int total = 0;
-    for (Floor floor : floors) {
-        total += floor.getSpots().size();
+        int total = 0;
+        for (Floor floor : floors) {
+            total += floor.getSpots().size();
+        }
+        return total;
     }
-    return total;
-}
-    
+
     public String getName() { return name; }
     public List<Floor> getFloors() { return floors; }
 }
