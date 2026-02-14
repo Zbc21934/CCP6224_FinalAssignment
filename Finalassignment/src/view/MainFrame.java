@@ -80,7 +80,7 @@ public class MainFrame extends JFrame {
         actionPanel.add(Box.createHorizontalStrut(20));
 
         // --- Rules Button ---
-        JButton rulesBtn = createStyledButton("Rules", new Color(52, 152, 219), Color.WHITE);
+        JButton rulesBtn = createStyledButton("<html><b>i<b>", new Color(52, 152, 219), Color.WHITE);
         rulesBtn.addActionListener(e -> showVehicleRules());
         actionPanel.add(rulesBtn);
         
