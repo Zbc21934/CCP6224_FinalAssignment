@@ -101,8 +101,10 @@ this.fineManager = new FineManager();
         // Step 5: Create Ticket (passing violation status)
         Ticket ticket = Ticket.createEntryTicket(plateNumber, spotId, vehicleType, isHandicapped, isViolation);
         
+        String currentSchemeName = fineManager.getCurrentSchemeName();
+        
         // Step 6: Insert into Database (Saving is_violation)
-        String sql = "INSERT INTO tickets (ticket_id, plate_number, vehicle_type, spot_id, entry_time, status, is_handicapped, is_violation) VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?, ?)";
+        String sql = "INSERT INTO tickets (ticket_id, plate_number, vehicle_type, spot_id, entry_time, status, is_handicapped, is_violation, entry_strategy) VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?, ?, ?)";
         
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, ticket.getTicketId());
@@ -112,6 +114,7 @@ this.fineManager = new FineManager();
             pstmt.setString(5, ticket.getEntryTime().toString());
             pstmt.setInt(6, isHandicapped ? 1 : 0);
             pstmt.setInt(7, isViolation ? 1 : 0); // ✅ Save violation status to DB
+            pstmt.setString(8, currentSchemeName);
             
             int rows = pstmt.executeUpdate();
 
@@ -158,6 +161,11 @@ this.fineManager = new FineManager();
         fineManager.updateFineScheme(schemeType);
     }
     
+    public String getCurrentFineScheme() {
+        // This will return the class name like "FixedFine"
+        return fineManager.getCurrentSchemeName();
+    }
+    
     // Core method to calculate total fee
     // Note: 'hasReservation' parameter removed because we now check the DB for the truth
     public double calculateTotalFee(String plate, double durationHours, String spotId) {
@@ -181,12 +189,40 @@ this.fineManager = new FineManager();
         } catch (SQLException e) {
             System.out.println("Error checking violation status: " + e.getMessage());
         }
-
-        // 3. Calculate Fine (Delegate to Strategy)
-        // If isReservedMisuse is true, Option B/C will add the fine amount
-        double fine = fineManager.calculateFine(durationHours, isReservedMisuse);
+        
+        // =========================================================
+        // ✅ 3. Fine Calculation (The "Future Entries Only" Logic)
+        // =========================================================
+        
+        // A. Retrieve the strategy used WHEN THE CAR ENTERED
+        String strategyAtEntry = getStrategyFromTicketDB(plate); 
+        
+        // B. Convert that name into a real Strategy Object
+        // Even if Admin changed to Option C today, if this car has "Option A" on ticket,
+        // this will return a FineOptionA object.
+        model.FineScheme applicableScheme = fineManager.getSchemeByString(strategyAtEntry);
+        
+        // C. Calculate the fine using that specific scheme
+        double fine = applicableScheme.FineCalculation(durationHours, isReservedMisuse);
         
         return parkingFee + fine;
+    }
+    
+    // Helper: Fetch the strategy name from the active ticket
+    private String getStrategyFromTicketDB(String plate) {
+        String sql = "SELECT entry_strategy FROM tickets WHERE plate_number = ? AND status = 'ACTIVE'";
+        // Note: Make sure to verify Connection is open
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, plate);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("entry_strategy");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error fetching ticket strategy: " + e.getMessage());
+        }
+        return "Option A"; // Fallback default
     }
 
     // =============================================================

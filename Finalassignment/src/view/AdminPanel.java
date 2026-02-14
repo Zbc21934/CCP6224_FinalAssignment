@@ -163,16 +163,33 @@ public class AdminPanel extends JPanel {
                     "Option C: Hourly Fine (RM 20 per hour)"
                 };
                 
+                //ask facade current Scheme name
+                String currentSchemeName = parkingSystem.getCurrentFineScheme();
+                
+                System.out.println("Current Scheme Name from Backend is: [" + currentSchemeName + "]");
+                // 2. Determine which option should be highlighted by default
+                int defaultIndex = 0; // Default to Option A
+                
+                if (currentSchemeName.contains("Progressive") || currentSchemeName.contains("OptionB")) {
+                    defaultIndex = 1; // Option B
+                }
+                else if (currentSchemeName.contains("Hourly") || currentSchemeName.contains("OptionC")) {
+                    defaultIndex = 2; // Option C
+                }
+                
+                
+                //show dialog with correct option
                 String selected = (String) JOptionPane.showInputDialog(this, 
                         "Select active Fine Calculation Strategy:", 
                         "System Configuration", 
-                        JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                        JOptionPane.QUESTION_MESSAGE, null, options, options[defaultIndex]);
                 
                 if (selected != null) {
                     String optionId = selected.split(":")[0].trim(); 
                     parkingSystem.updateFineScheme(optionId);
                     outputArea.setText("System Action: Successfully updated to " + selected);
                 }
+                
             } else if (cmd.contains("Logout")) {
                 isAuthenticated = false;
                 showLockScreen();

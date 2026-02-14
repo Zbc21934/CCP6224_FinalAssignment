@@ -213,7 +213,7 @@ public class MainFrame extends JFrame {
             if (spot instanceof model.ReservedSpot) {
 
                 //Check if the is Vehicle is HandicappedVehicle
-                boolean isPrivileged = type.equalsIgnoreCase("Handicapped") || isHandicapped;
+                boolean isPrivileged = type.equalsIgnoreCase("Handicapped");
                 
                 //if not Handicappedvehicle
                 if (!isPrivileged) {
@@ -240,7 +240,8 @@ public class MainFrame extends JFrame {
                         }
                         // User proceeded -> 'hasReservation' remains false, which Facade will flag as Violation
                     }
-                } //else : the Handicapped Vehicle can skip all the step, no asking for reservation ID, no warning
+                } //else : the Handicapped Vehicle can skip all the prompt, no asking for reservation ID, no warning
+                  //has reservation stay false, but the backend logic inside the facade will ensure no fine
             }
 
             // ==========================================================

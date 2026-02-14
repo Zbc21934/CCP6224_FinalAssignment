@@ -76,6 +76,7 @@ public class DbConnection {
                     + "status TEXT DEFAULT 'ACTIVE', " 
                     + "is_handicapped INTEGER DEFAULT 0, "
                     + "is_violation INTEGER DEFAULT 0, "
+                    + "entry_strategy TEXT, "
                     + "FOREIGN KEY(spot_id) REFERENCES parking_spots(spot_id)"
                     + ");";
 
