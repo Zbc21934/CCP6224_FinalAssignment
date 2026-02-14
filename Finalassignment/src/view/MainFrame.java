@@ -5,10 +5,13 @@ import model.Floor;
 import model.ParkingSpot;
 import model.Vehicle;
 import model.Ticket;
+import view.ReceiptDialog;
+import view.PaymentDialog;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import javax.swing.border.*;
+
 
 public class MainFrame extends JFrame {
 
@@ -22,7 +25,7 @@ public class MainFrame extends JFrame {
 
         // Setup Window
         setTitle("University Parking Management System");
-        setSize(1000, 750);
+        setSize(1100, 750); // Slightly wider to fit 5 columns comfortably
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -46,30 +49,28 @@ public class MainFrame extends JFrame {
         }
     }
 
-   private JPanel createVisualPanel() {
+    private JPanel createVisualPanel() {
         JPanel container = new JPanel(new BorderLayout());
-        container.setBackground(Color.WHITE); // Set main container background to white
+        container.setBackground(Color.WHITE); 
 
         // --- Top Bar: Title and Controls ---
-        // Consolidating floor selection and title at the top for a modern look
         JPanel topBar = new JPanel(new BorderLayout());
-        topBar.setBackground(new Color(245, 245, 245)); // Light gray background for contrast
-        topBar.setBorder(new EmptyBorder(15, 20, 15, 20)); // Add padding around the bar
+        topBar.setBackground(new Color(245, 245, 245)); 
+        topBar.setBorder(new EmptyBorder(15, 20, 15, 20)); 
 
         // 1. Left Side: Header Title
         currentFloorLabel = new JLabel("Please Select a Floor");
-        currentFloorLabel.setFont(new Font("Segoe UI", Font.BOLD, 24)); // Larger, modern font
-        currentFloorLabel.setForeground(new Color(52, 152, 219)); // Primary blue color
+        currentFloorLabel.setFont(new Font("Segoe UI", Font.BOLD, 24)); 
+        currentFloorLabel.setForeground(new Color(52, 152, 219)); 
         topBar.add(currentFloorLabel, BorderLayout.WEST);
 
-        // 2. Right Side: Button Area (Floors + Exit)
+        // 2. Right Side: Button Area
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        actionPanel.setOpaque(false); // Make panel transparent to show topBar color
+        actionPanel.setOpaque(false); 
 
         // --- Add Floor Selection Buttons ---
         List<Floor> floors = parkingSystem.getParkingLot().getFloors();
         for (Floor floor : floors) {
-            // Call the helper method to create styled buttons
             JButton floorBtn = createStyledButton(floor.getFloorID(), Color.WHITE, Color.BLACK);
             floorBtn.addActionListener(e -> loadFloor(floor));
             actionPanel.add(floorBtn);
@@ -77,6 +78,13 @@ public class MainFrame extends JFrame {
 
         // Add visual spacing
         actionPanel.add(Box.createHorizontalStrut(20));
+
+        // --- Rules Button ---
+        JButton rulesBtn = createStyledButton("Rules", new Color(52, 152, 219), Color.WHITE);
+        rulesBtn.addActionListener(e -> showVehicleRules());
+        actionPanel.add(rulesBtn);
+        
+        actionPanel.add(Box.createHorizontalStrut(10));
 
         // --- Add Exit Button (Orange Theme) ---
         JButton exitBtn = createStyledButton("Vehicle Exit (Enter Plate)", new Color(243, 156, 18), Color.WHITE);
@@ -88,30 +96,26 @@ public class MainFrame extends JFrame {
         });
         actionPanel.add(exitBtn);
 
-        // Position the action panel on the right side of the Top Bar
         topBar.add(actionPanel, BorderLayout.EAST);
 
         // --- Center Area: Parking Spots Grid ---
         spotsPanel = new JPanel();
         spotsPanel.setBackground(Color.WHITE);
-        spotsPanel.setBorder(new EmptyBorder(20, 20, 20, 20)); // Margin for the grid
+        spotsPanel.setBorder(new EmptyBorder(20, 20, 20, 20)); 
         JScrollPane scrollPane = new JScrollPane(spotsPanel);
-        scrollPane.setBorder(null); // Remove default border for a cleaner look
+        scrollPane.setBorder(null); 
 
-        // Assemble the final container
-        container.add(topBar, BorderLayout.NORTH); // Controls at the top
-        container.add(scrollPane, BorderLayout.CENTER); // Grid in the middle
+        container.add(topBar, BorderLayout.NORTH); 
+        container.add(scrollPane, BorderLayout.CENTER); 
         
-        // Note: BorderLayout.SOUTH is empty as controls are moved to the top
-
         return container;
     }
 
-private void loadFloor(Floor floor) {
+    private void loadFloor(Floor floor) {
         currentFloorLabel.setText("Viewing: " + floor.getFloorID());
         spotsPanel.removeAll();
 
-        // 1. Set Grid to 5 Columns (matches your 5 spots per row)
+        // 1. Set Grid to 5 Columns (matches your 5 spots per row requirements)
         spotsPanel.setLayout(new GridLayout(0, 5, 15, 15));
 
         for (ParkingSpot spot : floor.getSpots()) {
@@ -148,7 +152,7 @@ private void loadFloor(Floor floor) {
     }
 
     private void showSpotDetails(ParkingSpot spot) {
-        // 1. if occupied, show dialog
+        // 1. If occupied, show dialog
         if (spot.isOccupied()) {
             Vehicle v = spot.getVehicle();
             String plate = (v != null) ? v.getLicensePlate() : "Unknown";
@@ -161,7 +165,7 @@ private void loadFloor(Floor floor) {
 
             Object[] options = {"Cancel"};
 
-            int choice = JOptionPane.showOptionDialog(this,
+            JOptionPane.showOptionDialog(this,
                     message,
                     "Spot Occupied",
                     JOptionPane.YES_NO_OPTION,
@@ -171,7 +175,8 @@ private void loadFloor(Floor floor) {
                     options[0]);
             return;
         }
-        // 2. if empty, show menu
+
+        // 2. If empty, show menu
         JPanel panel = new JPanel(new GridLayout(0, 1));
         panel.add(new JLabel("Spot ID: " + spot.getSpotID() + " (" + spot.getClass().getSimpleName() + ")"));
 
@@ -184,15 +189,15 @@ private void loadFloor(Floor floor) {
         panel.add(new JLabel("Select Vehicle Type:"));
         panel.add(typeBox);
         
-        //handicapped check box
+        // Handicapped check box
         JCheckBox handicappedCheckBox = new JCheckBox("Handicapped Card Holder?");
         panel.add(handicappedCheckBox);
         
-        // 3. confirmDialog (OK / Cancel)
+        // 3. Confirm Dialog (OK / Cancel)
         int result = JOptionPane.showConfirmDialog(null, panel, "Park Vehicle",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
-        // 4. if OK
+        // 4. If OK
         if (result == JOptionPane.OK_OPTION) {
             String plate = plateField.getText().trim();
             String type = (String) typeBox.getSelectedItem();
@@ -210,8 +215,7 @@ private void loadFloor(Floor floor) {
                         + "<b>Ticket ID:</b> " + ticket.getTicketId() + "<br>"
                         + "<b>Spot:</b> " + ticket.getSpotId() + "<br>"
                         + "<b>Entry Time:</b> " + ticket.getFormattedEntryTime() + "<br>"
-                        + 
-                        "</html>";
+                        + "</html>";
                 JOptionPane.showMessageDialog(this, ticketMsg, "Parking Ticket", JOptionPane.INFORMATION_MESSAGE);
 
                 loadFloor(parkingSystem.getParkingLot().getFloors().get(0));
@@ -230,17 +234,19 @@ private void loadFloor(Floor floor) {
         }
         PaymentDialog payDialog = new PaymentDialog(this, bill);
         payDialog.setVisible(true);
-       String method = payDialog.getSelectedMethod();
+        String method = payDialog.getSelectedMethod();
 
         if (method != null) { 
             boolean paid = parkingSystem.processPayment(plateNumber, method);
 
             if (paid) {
+                // Generate Official Receipt
                 String finalReceipt = parkingSystem.generateOfficialReceipt(plateNumber);
                 finalReceipt += "<br><center>Thank you for parking with us!</center>";
 
                 new ReceiptDialog(this, finalReceipt).setVisible(true);
 
+                // Refresh UI
                 if (!parkingSystem.getParkingLot().getFloors().isEmpty()) {
                     loadFloor(parkingSystem.getParkingLot().getFloors().get(0));
                 }
@@ -249,16 +255,25 @@ private void loadFloor(Floor floor) {
             }
         }
     }
+
+private void showVehicleRules() {
+        // We now get the text from the Model package
+        String rulesHtml = model.VehicleRules.getRulesHtml();
+
+        JOptionPane.showMessageDialog(this, 
+                rulesHtml, 
+                "Parking Lot Rules", 
+                JOptionPane.INFORMATION_MESSAGE);
+    }
     
-    
-   private JPanel createReportPanel() {
+    private JPanel createReportPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         
         // Selection Row
         JPanel navBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         navBar.setBackground(new Color(240, 240, 240));
 
-        // Report Button
+        // Report Buttons
         JButton btnOcc = new JButton("Occupancy Report ");
         JButton btnRev = new JButton("Revenue Report ");
         JButton btnVeh = new JButton("Currently Vehicles in the Lot ");
@@ -268,17 +283,19 @@ private void loadFloor(Floor floor) {
         navBar.add(btnVeh);
         navBar.add(btnFine);
         
-        // text areaa
+        // Text Area
         JTextArea reportArea = new JTextArea();
         reportArea.setFont(new Font("Monospaced", Font.PLAIN, 15));
         reportArea.setEditable(false);
         reportArea.setMargin(new Insets(20, 20, 20, 20));
         JScrollPane scrollPane = new JScrollPane(reportArea);
 
-        // button logic call controller
+        // Button Logic
         btnOcc.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("OCCUPANCY")));
         btnRev.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("REVENUE")));
         btnVeh.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("VEHICLES")));
+        btnFine.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("FINES"))); // Fixed to use "FINES" type
+
         panel.add(navBar, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
         
@@ -291,12 +308,11 @@ private void loadFloor(Floor floor) {
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btn.setBackground(bg);
         btn.setForeground(fg);
-        btn.setFocusPainted(false); // Remove focus border (dotted line) on click
+        btn.setFocusPainted(false); 
 
-        // Add a compound border (thin line + padding) for a refined look
         btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1), // Light gray border
-                BorderFactory.createEmptyBorder(8, 15, 8, 15) // Inner text padding
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1), 
+                BorderFactory.createEmptyBorder(8, 15, 8, 15) 
         ));
         return btn;
     }
