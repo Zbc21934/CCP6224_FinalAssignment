@@ -182,7 +182,7 @@ public class ParkingSystemFacade {
         double fine = fineManager.calculateFine(durationHours, isReservedMisuse);
         
         return parkingFee + fine;
-
+    }
     //REPORT GENERATION
     public String generateDashboardReport() {
         StringBuilder report = new StringBuilder();

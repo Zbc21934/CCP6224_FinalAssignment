@@ -24,8 +24,6 @@ public class PaymentService {
     Connection conn = DbConnection.getInstance().getConnection();
     try {
         String status = isPaid ? "PAID" : "ACTIVE";
-        
-        // 1. 确保 SQL 能查到正确的数据
         String sql = "SELECT * FROM tickets WHERE plate_number = ? AND status = ? ORDER BY entry_time DESC LIMIT 1";
 
         PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -35,7 +33,6 @@ public class PaymentService {
 
         if (rs.next()) {
             String ticketId = rs.getString("ticket_id");
-            // 处理时间解析
             LocalDateTime entryTime = LocalDateTime.parse(rs.getString("entry_time"));
             LocalDateTime exitTime = LocalDateTime.now();
             if (isPaid && rs.getString("exit_time") != null) {
@@ -46,27 +43,20 @@ public class PaymentService {
 
             String type = rs.getString("vehicle_type");
             String spotId = rs.getString("spot_id");
-
-            // 🟢 2. 关键修改：从数据库读取 is_handicapped
             boolean isHandicapped = rs.getInt("is_handicapped") == 1;
 
             Vehicle vehicle = Vehicle.create(plateNumber, type);
             ParkingSpot spot = parkingLot.getSpotById(spotId);
-
-            // 🟢 3. 关键修改：传入 isHandicapped 参数进行计算
             double parkingFee = FeeCalculator.calculate(vehicle, spot, entryTime, isHandicapped);
             
-            // 计算时长
             long hours = FeeCalculator.getDurationInHours(entryTime);
 
-            // 🟢 4. 优化收据上的“费率”显示 (Rate Display)
-            // 如果是 OKU，显示的单价应该是 RM 2.00 或 RM 0.00，而不是车位原本的 RM 10.00
             double displayRate = (spot != null) ? spot.getHourlyRate() : 2.0;
             if (isHandicapped) {
                  if (spot instanceof model.HandicappedSpot) {
-                     displayRate = 0.0; // 免费
+                     displayRate = 0.0; 
                  } else {
-                     displayRate = 2.0; // 优惠价
+                     displayRate = 2.0;
                  }
             }
 
@@ -81,12 +71,10 @@ public class PaymentService {
             String paymentMethodInfo = "";
             if (isPaid) {
                 String method = getPaymentMethod(ticketId);
-                // 给标题加个漂亮的绿框
                 title += " <span style='color:green; border:1px solid green; padding:2px; border-radius:3px; font-size:10px;'>✅ PAID</span>";
                 paymentMethodInfo = "<br><b>Payment Method:</b> " + method;
             }
             
-            // 🟢 5. 如果是 OKU，加一行提示文字
             String okuLabel = "";
             if (isHandicapped) {
                 okuLabel = "<br><span style='color:orange; font-size:10px;'>(Handicapped Rate Applied)</span>";
@@ -100,7 +88,7 @@ public class PaymentService {
                     + "<b>Exit Time:</b> %s<br>"
                     + "------------------------------<br>"
                     + "<b>Duration:</b> %d hours<br>"
-                    + "<b>Rate:</b> RM %.2f/hr %s<br>"  // 修改了这里，使用 displayRate
+                    + "<b>Rate:</b> RM %.2f/hr %s<br>" 
                     + "<b>Parking Fee:</b> RM %.2f<br>"
                     + "<b>Unpaid Fines:</b> RM %.2f<br>"
                     + "------------------------------<br>"
