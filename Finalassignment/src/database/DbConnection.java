@@ -123,7 +123,9 @@ public class DbConnection {
             String initSettings = "INSERT OR IGNORE INTO admin_settings (setting_key, setting_value) "
                                 + "VALUES ('current_fine_scheme', 'SCHEME_A');";
             stmt.execute(initSettings);
-            
+            String initPassword = "INSERT OR IGNORE INTO admin_settings (setting_key, setting_value) "
+                                + "VALUES ('admin_password', 'admin');";
+            stmt.execute(initPassword);
             // ---------------------------------------------------------
             // RESERVATIONS (New! For verification)
             // ---------------------------------------------------------

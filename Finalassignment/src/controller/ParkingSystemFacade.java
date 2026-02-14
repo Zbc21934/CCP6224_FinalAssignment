@@ -23,10 +23,10 @@ public class ParkingSystemFacade {
 
         // 2. Establish database connection
         this.conn = DbConnection.getInstance().getConnection();
-
+this.fineManager = new FineManager();
         // 3. Initialize Services and Managers
-        this.paymentService = new PaymentService();
-        this.fineManager = new FineManager();
+        this.paymentService = new PaymentService(this.fineManager);
+        
         this.reportService = new ReportService(this.conn, this.parkingLot);
 
         // 4. Restore state from DB

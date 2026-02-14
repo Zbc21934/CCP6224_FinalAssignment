@@ -13,11 +13,8 @@ public class PaymentService {
     // ✅ New: Add FineManager to calculate fines dynamically
     private FineManager fineManager;
 
-    public PaymentService() {
-        this.fineManager = new FineManager();
-        // Ideally, we should sync the scheme with the one in Facade, 
-        // but for now, it defaults to Option A (or you can load from DB).
-        // If Facade changes it, it might need to notify here, but let's assume default for now.
+    public PaymentService(FineManager sharedManager) {
+        this.fineManager = sharedManager;
     }
 
     // Generate Bill (Unpaid) or Receipt (Paid)
