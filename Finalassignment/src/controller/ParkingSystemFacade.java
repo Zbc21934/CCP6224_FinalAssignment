@@ -154,6 +154,16 @@ public class ParkingSystemFacade {
         } catch (IllegalArgumentException e) {
             System.out.println("Found unknown vehicle type in DB, skipping.");
         }
+        
+        
+        try {
+            Statement stmt = conn.createStatement();
+            stmt.executeUpdate("INSERT OR IGNORE INTO fines (plate_number, amount, reason, status) VALUES ('JJU8888', 50.0, 'Illegal Parking', 'UNPAID')");
+            stmt.executeUpdate("INSERT OR IGNORE INTO fines (plate_number, amount, reason, status) VALUES ('WWA1234', 100.0, 'Overtime > 24h', 'UNPAID')");
+            stmt.executeUpdate("INSERT OR IGNORE INTO fines (plate_number, amount, reason, status) VALUES ('PEN666', 30.0, 'Not Parked in Bay', 'UNPAID')");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     
 
