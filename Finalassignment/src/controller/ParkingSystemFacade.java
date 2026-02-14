@@ -85,8 +85,14 @@ this.fineManager = new FineManager();
         }
         
         // 🔥 Step 4: Determine Violation Status 🔥
-        // Logic: If it is a ReservedSpot AND the user does NOT have a valid reservation -> Violation
-        boolean isViolation = (spot instanceof ReservedSpot && !hasReservation);
+        // Logic: If it is a ReservedSpot 
+        // THEN the user does NOT have a valid reservation AND not HandicappedVehicle -> Violation
+        boolean isViolation = false;
+        if(spot instanceof ReservedSpot ){
+            if(!hasReservation && !(vehicle instanceof HandicappedVehicle))
+                isViolation = true;
+        }
+            
         
         if (isViolation) {
             System.out.println("⚠️ Violation Recorded: " + plateNumber + " in Reserved Spot without ID.");

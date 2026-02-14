@@ -211,29 +211,36 @@ public class MainFrame extends JFrame {
 
             // Check if the spot is a ReservedSpot
             if (spot instanceof model.ReservedSpot) {
-                // Prompt user for Reservation ID
-                String resId = JOptionPane.showInputDialog(this,
-                        "This is a Reserved Spot.\nPlease enter your Reservation ID:",
-                        "Reservation Check",
-                        JOptionPane.QUESTION_MESSAGE);
 
-                // Validate ID via Facade
-                boolean isValid = parkingSystem.validateReservation(resId);
-                hasReservation = isValid;
+                //Check if the is Vehicle is HandicappedVehicle
+                boolean isPrivileged = type.equalsIgnoreCase("Handicapped") || isHandicapped;
+                
+                //if not Handicappedvehicle
+                if (!isPrivileged) {
+                    // Prompt user for Reservation ID
+                    String resId = JOptionPane.showInputDialog(this,
+                            "This is a Reserved Spot.\nPlease enter your Reservation ID:",
+                            "Reservation Check",
+                            JOptionPane.QUESTION_MESSAGE);
 
-                // Warn user if invalid ID but allow entry (Violation Logic)
-                if (!isValid) {
-                    int choice = JOptionPane.showConfirmDialog(this,
-                            "Invalid or missing Reservation ID!\nParking here will result in a FINE.\nDo you still want to park?",
-                            "Warning: Violation",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE);
+                    // Validate ID via Facade
+                    boolean isValid = parkingSystem.validateReservation(resId);
+                    hasReservation = isValid;
 
-                    if (choice != JOptionPane.YES_OPTION) {
-                        return; // User cancelled
+                    // Warn user if invalid ID but allow entry (Violation Logic)
+                    if (!isValid) {
+                        int choice = JOptionPane.showConfirmDialog(this,
+                                "Invalid or missing Reservation ID!\nParking here will result in a FINE.\nDo you still want to park?",
+                                "Warning: Violation",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.WARNING_MESSAGE);
+
+                        if (choice != JOptionPane.YES_OPTION) {
+                            return; // User cancelled
+                        }
+                        // User proceeded -> 'hasReservation' remains false, which Facade will flag as Violation
                     }
-                    // User proceeded -> 'hasReservation' remains false, which Facade will flag as Violation
-                }
+                } //else : the Handicapped Vehicle can skip all the step, no asking for reservation ID, no warning
             }
 
             // ==========================================================
