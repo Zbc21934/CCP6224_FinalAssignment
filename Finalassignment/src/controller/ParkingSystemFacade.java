@@ -13,41 +13,55 @@ public class ParkingSystemFacade {
     private ParkingLot parkingLot;
     private Connection conn;
     private PaymentService paymentService;
-
     private FineManager fineManager;
-
     private ReportService reportService;
 
-
     public ParkingSystemFacade() {
+        // 1. Initialize the parking lot structure
         this.parkingLot = new ParkingLot("University Parking");
         this.parkingLot.initialize(5, 20);
 
+        // 2. Establish database connection
         this.conn = DbConnection.getInstance().getConnection();
-        this.paymentService = new PaymentService();
 
+        // 3. Initialize Services and Managers
+        this.paymentService = new PaymentService();
         this.fineManager = new FineManager();
-
-        
-        this.paymentService = new PaymentService();
         this.reportService = new ReportService(this.conn, this.parkingLot);
 
-        loadActiveTickets();  // Restore the parking state from the database
+        // 4. Restore state from DB
+        loadActiveTickets();  
     }
 
-    
-    public String getDashboardReport(String reportType) {
-        switch(reportType) {
-            case "OCCUPANCY": return reportService.getOccupancySummary();
-            case "REVENUE"  : return reportService.getRevenueSummary();
-            case "VEHICLES" : return reportService.getActiveVehicleTable();
-            case "FINES"    : return reportService.getFineReport();
-            default         : return reportService.getOccupancySummary() + "\n\n" + reportService.getRevenueSummary();
+    // =============================================================
+    // ✅ RESERVATION VERIFICATION
+    // =============================================================
+    public boolean validateReservation(String resId) {
+        if (resId == null || resId.trim().isEmpty()) {
+            return false;
         }
+        
+        String sql = "SELECT * FROM reservations WHERE res_id = ? AND status = 'VALID'";
+        
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, resId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return true; 
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Reservation check failed: " + e.getMessage());
+        }
+        return false; 
     }
-    
-    public Ticket parkVehicle(String plateNumber, String vehicleType, String spotId, boolean isHandicapped) {
 
+    // =============================================================
+    // ✅ CORE PARKING LOGIC (UPDATED)
+    // =============================================================
+
+    // Update: Now accepts 'hasReservation' to determine if a violation occurred
+    public Ticket parkVehicle(String plateNumber, String vehicleType, String spotId, boolean isHandicapped, boolean hasReservation) {
         // Step 1: find spot
         ParkingSpot spot = parkingLot.getSpotById(spotId);
         if (spot == null) {
@@ -55,7 +69,7 @@ public class ParkingSystemFacade {
             return null;
         }
 
-        // Step 2: use static method of vehicle
+        // Step 2: Create vehicle instance
         Vehicle vehicle;
         try {
             vehicle = Vehicle.create(plateNumber, vehicleType);
@@ -64,14 +78,26 @@ public class ParkingSystemFacade {
             return null;
         }
 
-        // Step 3: check logic: vehicle can park or not
+        // Step 3: Check basic compatibility
         if (!vehicle.canParkIn(spot)) {
             System.out.println("Validation Failed: " + vehicleType + " cannot park in " + spot.getClass().getSimpleName());
             return null;
         }
         
-        Ticket ticket = Ticket.createEntryTicket(plateNumber, spotId, vehicleType, isHandicapped);
-        String sql = "INSERT INTO tickets (ticket_id, plate_number, vehicle_type, spot_id, entry_time, status, is_handicapped) VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?)";
+        // 🔥 Step 4: Determine Violation Status 🔥
+        // Logic: If it is a ReservedSpot AND the user does NOT have a valid reservation -> Violation
+        boolean isViolation = (spot instanceof ReservedSpot && !hasReservation);
+        
+        if (isViolation) {
+            System.out.println("⚠️ Violation Recorded: " + plateNumber + " in Reserved Spot without ID.");
+        }
+
+        // Step 5: Create Ticket (passing violation status)
+        Ticket ticket = Ticket.createEntryTicket(plateNumber, spotId, vehicleType, isHandicapped, isViolation);
+        
+        // Step 6: Insert into Database (Saving is_violation)
+        String sql = "INSERT INTO tickets (ticket_id, plate_number, vehicle_type, spot_id, entry_time, status, is_handicapped, is_violation) VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?, ?)";
+        
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, ticket.getTicketId());
             pstmt.setString(2, ticket.getPlateNumber());
@@ -79,10 +105,12 @@ public class ParkingSystemFacade {
             pstmt.setString(4, ticket.getSpotId());
             pstmt.setString(5, ticket.getEntryTime().toString());
             pstmt.setInt(6, isHandicapped ? 1 : 0);
+            pstmt.setInt(7, isViolation ? 1 : 0); // ✅ Save violation status to DB
+            
             int rows = pstmt.executeUpdate();
 
             if (rows > 0) {
-                spot.assignVehicle(vehicle); //refresh db
+                spot.assignVehicle(vehicle); // Update memory state
                 return ticket;
             }
         } catch (SQLException e) {
@@ -91,18 +119,15 @@ public class ParkingSystemFacade {
         return null;
     }
 
-    //vehicle checkout
+    // Vehicle Checkout Wrapper
     public String checkOutVehicle(String plateNumber) {
         return paymentService.generateBillOrReceipt(plateNumber, parkingLot, false);
     }
 
     public boolean processPayment(String plateNumber, String paymentMethod) {
         String spotId = paymentService.getSpotIdByPlate(plateNumber);
+        double amount = paymentService.calculateCurrentFee(plateNumber, parkingLot); // This should eventually call calculateTotalFee
 
-        // calculate amout
-        double amount = paymentService.calculateCurrentFee(plateNumber, parkingLot);
-
-        // call service
         boolean isPaid = paymentService.processPayment(plateNumber, paymentMethod, amount);
 
         if (isPaid && spotId != null) {
@@ -118,6 +143,59 @@ public class ParkingSystemFacade {
     public String generateOfficialReceipt(String plateNumber) {
         return paymentService.generateBillOrReceipt(plateNumber, parkingLot, true);
     }
+    
+    // =============================================================
+    // ✅ BILLING & FINE LOGIC (UPDATED)
+    // =============================================================
+
+    public void updateFineScheme(String schemeType) {
+        fineManager.updateFineScheme(schemeType);
+    }
+    
+    // Core method to calculate total fee
+    // Note: 'hasReservation' parameter removed because we now check the DB for the truth
+    public double calculateTotalFee(String plate, double durationHours, String spotId) {
+        // 1. Basic Parking Fee
+        ParkingSpot spot = parkingLot.getSpotById(spotId);
+        double rate = (spot != null) ? spot.getHourlyRate() : 0;
+        double parkingFee = durationHours * rate;
+        
+        // 2. Check for violation (Query Database for the truth!)
+        boolean isReservedMisuse = false;
+        
+        String sql = "SELECT is_violation FROM tickets WHERE plate_number = ? AND status = 'ACTIVE'";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, plate);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    // Check if the ticket was marked as a violation at entry
+                    isReservedMisuse = (rs.getInt("is_violation") == 1);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking violation status: " + e.getMessage());
+        }
+
+        // 3. Calculate Fine (Delegate to Strategy)
+        // If isReservedMisuse is true, Option B/C will add the fine amount
+        double fine = fineManager.calculateFine(durationHours, isReservedMisuse);
+        
+        return parkingFee + fine;
+    }
+
+    // =============================================================
+    // REPORTING & UTILITIES
+    // =============================================================
+
+    public String getDashboardReport(String reportType) {
+        switch(reportType) {
+            case "OCCUPANCY": return reportService.getOccupancySummary();
+            case "REVENUE"  : return reportService.getRevenueSummary();
+            case "VEHICLES" : return reportService.getActiveVehicleTable();
+            case "FINES"    : return reportService.getFineReport();
+            default         : return reportService.getOccupancySummary() + "\n\n" + reportService.getRevenueSummary();
+        }
+    }
 
     public ParkingLot getParkingLot() {
         return parkingLot;
@@ -126,26 +204,18 @@ public class ParkingSystemFacade {
     private void loadActiveTickets() {
         System.out.println("Loading active tickets from database...");
 
-        // Query only for vehicles that are still parked (status = 'ACTIVE')
         String sql = "SELECT spot_id, plate_number, vehicle_type FROM tickets WHERE status = 'ACTIVE'";
 
         try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
-
             while (rs.next()) {
                 String spotId = rs.getString("spot_id");
                 String plate = rs.getString("plate_number");
                 String type = rs.getString("vehicle_type");
 
-                // 1. Find the matching ParkingSpot object in memory
                 ParkingSpot spot = parkingLot.getSpotById(spotId);
-
                 if (spot != null) {
-                    // 2. Re-create the Vehicle object
                     Vehicle vehicle = Vehicle.create(plate, type);
-
-                    // 3. Re-assign the vehicle to the spot in memory
                     spot.assignVehicle(vehicle);
-
                     System.out.println("Restored: " + plate + " at " + spotId);
                 }
             }
@@ -155,128 +225,11 @@ public class ParkingSystemFacade {
             System.out.println("Found unknown vehicle type in DB, skipping.");
         }
         
-        
+        // Initialize dummy fines for testing
         try {
             Statement stmt = conn.createStatement();
             stmt.executeUpdate("INSERT OR IGNORE INTO fines (plate_number, amount, reason, status) VALUES ('JJU8888', 50.0, 'Illegal Parking', 'UNPAID')");
             stmt.executeUpdate("INSERT OR IGNORE INTO fines (plate_number, amount, reason, status) VALUES ('WWA1234', 100.0, 'Overtime > 24h', 'UNPAID')");
-            stmt.executeUpdate("INSERT OR IGNORE INTO fines (plate_number, amount, reason, status) VALUES ('PEN666', 30.0, 'Not Parked in Bay', 'UNPAID')");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
-
-    // Method called by Admin Panel to change Scheme
-    public void updateFineScheme(String schemeType) {
-        fineManager.updateFineScheme(schemeType);
-    }
-    
-    // Core method to calculate total fee (Exit Panel will call this)
-    // This is the heart of the Billing logic
-    public double calculateTotalFee(String plate, double durationHours, String spotId, boolean hasReservation) {
-        // 1. Basic Parking Fee
-        // Retrieve the spot to get its specific hourly rate
-        ParkingSpot spot = parkingLot.getSpotById(spotId);
-        double rate = (spot != null) ? spot.getHourlyRate() : 0;
-        double parkingFee = durationHours * rate;
-        
-        // 2. Check for violation (Reserved Misuse)
-        boolean isReservedMisuse = false;
-       //write it after implement reservation
-       // if (spot instanceof ReservedSpot && !hasReservation) {
-       //     isReservedMisuse = true;
-       // }
-
-        // 3. Calculate Fine (Delegate task to FineManager -> Strategy)
-        double fine = fineManager.calculateFine(durationHours, isReservedMisuse);
-        
-        return parkingFee + fine;
-    }
-    //REPORT GENERATION
-    public String generateDashboardReport() {
-        StringBuilder report = new StringBuilder();
-        report.append("=========================================\n");
-        report.append("       UNIVERSITY PARKING DASHBOARD      \n");
-        report.append("=========================================\n\n");
-
-        try {
-            //oCCUPANCY REPORT
-            // -------------------
-            String countSql = "SELECT COUNT(*) AS total FROM tickets WHERE status = 'ACTIVE'";
-            Statement stmt = conn.createStatement();
-            ResultSet rsCount = stmt.executeQuery(countSql);
-            int activeVehicles = 0;
-            if (rsCount.next()) {
-                activeVehicles = rsCount.getInt("total");
-            }
-            int totalSpots = 100; // 5 floors * 20 spots
-            double occupancyRate = (double) activeVehicles / totalSpots * 100;
-            
-            report.append("[1] OCCUPANCY REPORT\n");
-            report.append("--------------------\n");
-            report.append(String.format("Total Spots:    %d\n", totalSpots));
-            report.append(String.format("Occupied Spots: %d\n", activeVehicles));
-            report.append(String.format("Available:      %d\n", (totalSpots - activeVehicles)));
-            report.append(String.format("Occupancy Rate: %.2f%%\n\n", occupancyRate));
-
-
-            // REVENUE REPORT
-            String revSql = "SELECT SUM(total_amount) AS total_rev FROM payments";
-            ResultSet rsRev = stmt.executeQuery(revSql);
-            double totalRevenue = 0.0;
-            if (rsRev.next()) {
-                totalRevenue = rsRev.getDouble("total_rev");
-            }
-            report.append("[2] REVENUE REPORT\n");
-            report.append("------------------\n");
-            report.append(String.format("Total Revenue Collected: RM %.2f\n\n", totalRevenue));
-
-
-            //  LIST OF VEHICLES (CURRENTLY IN LOT)
-            report.append("[3] CURRENT VEHICLES IN LOT\n");
-            report.append("---------------------------\n");
-            report.append(String.format("%-15s %-15s %-10s %-20s\n", "Plate No.", "Type", "Spot", "Entry Time"));
-            report.append("------------------------------------------------------------\n");
-            
-            String vehicleSql = "SELECT plate_number, vehicle_type, spot_id, entry_time FROM tickets WHERE status = 'ACTIVE' ORDER BY entry_time DESC";
-            ResultSet rsVeh = stmt.executeQuery(vehicleSql);
-            boolean hasVehicles = false;
-            while (rsVeh.next()) {
-                hasVehicles = true;
-                String time = rsVeh.getString("entry_time").substring(11, 19);
-                report.append(String.format("%-15s %-15s %-10s %-20s\n", 
-                        rsVeh.getString("plate_number"),
-                        rsVeh.getString("vehicle_type"),
-                        rsVeh.getString("spot_id"),
-                        time));
-            }
-            if (!hasVehicles) report.append("No vehicles currently parked.\n");
-            report.append("\n");
-
-
-            // OUTSTANDING FINES REPORT
-            report.append("[4] OUTSTANDING FINES (UNPAID)\n");
-            report.append("------------------------------\n");
-            report.append(String.format("%-15s %-10s %-20s\n", "Plate No.", "Amount", "Reason"));
-            report.append("--------------------------------------------------\n");
-            
-            String fineSql = "SELECT plate_number, amount, reason FROM fines WHERE status = 'UNPAID'";
-            ResultSet rsFines = stmt.executeQuery(fineSql);
-            boolean hasFines = false;
-            while (rsFines.next()) {
-                hasFines = true;
-                report.append(String.format("%-15s RM %-7.2f %-20s\n", 
-                        rsFines.getString("plate_number"),
-                        rsFines.getDouble("amount"),
-                        rsFines.getString("reason")));
-            }
-            if (!hasFines) report.append("No outstanding fines.\n");
-
-        } catch (SQLException e) {
-            report.append("Error generating report: " + e.getMessage());
-        }
-
-        return report.toString();
+        } catch (Exception e) { }
     }
 }

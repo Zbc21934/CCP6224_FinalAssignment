@@ -75,6 +75,7 @@ public class DbConnection {
                     + "fee_amount REAL DEFAULT 0.0, "    
                     + "status TEXT DEFAULT 'ACTIVE', " 
                     + "is_handicapped INTEGER DEFAULT 0, "
+                    + "is_violation INTEGER DEFAULT 0, "
                     + "FOREIGN KEY(spot_id) REFERENCES parking_spots(spot_id)"
                     + ");";
 
@@ -122,6 +123,25 @@ public class DbConnection {
             String initSettings = "INSERT OR IGNORE INTO admin_settings (setting_key, setting_value) "
                                 + "VALUES ('current_fine_scheme', 'SCHEME_A');";
             stmt.execute(initSettings);
+            
+            // ---------------------------------------------------------
+            // RESERVATIONS (New! For verification)
+            // ---------------------------------------------------------
+            String sqlReservations = "CREATE TABLE IF NOT EXISTS reservations ("
+                    + "res_id TEXT PRIMARY KEY, "    // 例如 'VIP-001'
+                    + "status TEXT DEFAULT 'VALID'"  // VALID / USED
+                    + ");";
+            stmt.execute(sqlReservations);
+
+            // ---------------------------------------------------------
+            // INSERT DUMMY DATA (For testing purposes)
+            // ---------------------------------------------------------
+            // Insert some valid IDs for testing the GUI later
+            String initRes = "INSERT OR IGNORE INTO reservations (res_id) VALUES "
+                           + "('VIP-001'), "
+                           + "('RES-123'), "
+                           + "('STAFF-999');";
+            stmt.execute(initRes);
 
             System.out.println("Complete Database Schema initialized successfully.");
             
