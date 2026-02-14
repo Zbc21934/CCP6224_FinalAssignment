@@ -17,11 +17,12 @@ public abstract class Vehicle {
     
     public static Vehicle create(String plate, String typeStr) {
         switch (typeStr.toUpperCase()) {
-            case "MOTORCYCLE": 
+            case "MOTORCYCLE":
                 return new Motorcycle(plate);
             case "CAR":
                 return new Car(plate);
-            case "SUV":        
+            case "SUV":
+            case "TRUCK":   // TRUCK are same types as SUV  
                 return new SUV(plate);
             case "HANDICAPPED":
                 return new HandicappedVehicle(plate);

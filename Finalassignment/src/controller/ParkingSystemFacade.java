@@ -13,7 +13,11 @@ public class ParkingSystemFacade {
     private ParkingLot parkingLot;
     private Connection conn;
     private PaymentService paymentService;
+
+    private FineManager fineManager;
+
     private ReportService reportService;
+
 
     public ParkingSystemFacade() {
         this.parkingLot = new ParkingLot("University Parking");
@@ -21,9 +25,13 @@ public class ParkingSystemFacade {
 
         this.conn = DbConnection.getInstance().getConnection();
         this.paymentService = new PaymentService();
+
+        this.fineManager = new FineManager();
+
         
         this.paymentService = new PaymentService();
         this.reportService = new ReportService(this.conn, this.parkingLot);
+
         loadActiveTickets();  // Restore the parking state from the database
     }
 
@@ -148,6 +156,33 @@ public class ParkingSystemFacade {
         }
     }
     
+
+    // Method called by Admin Panel to change Scheme
+    public void updateFineScheme(String schemeType) {
+        fineManager.updateFineScheme(schemeType);
+    }
+    
+    // Core method to calculate total fee (Exit Panel will call this)
+    // This is the heart of the Billing logic
+    public double calculateTotalFee(String plate, double durationHours, String spotId, boolean hasReservation) {
+        // 1. Basic Parking Fee
+        // Retrieve the spot to get its specific hourly rate
+        ParkingSpot spot = parkingLot.getSpotById(spotId);
+        double rate = (spot != null) ? spot.getHourlyRate() : 0;
+        double parkingFee = durationHours * rate;
+        
+        // 2. Check for violation (Reserved Misuse)
+        boolean isReservedMisuse = false;
+       //write it after implement reservation
+       // if (spot instanceof ReservedSpot && !hasReservation) {
+       //     isReservedMisuse = true;
+       // }
+
+        // 3. Calculate Fine (Delegate task to FineManager -> Strategy)
+        double fine = fineManager.calculateFine(durationHours, isReservedMisuse);
+        
+        return parkingFee + fine;
+
     //REPORT GENERATION
     public String generateDashboardReport() {
         StringBuilder report = new StringBuilder();
