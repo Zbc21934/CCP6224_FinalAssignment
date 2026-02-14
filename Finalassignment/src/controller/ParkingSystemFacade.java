@@ -226,10 +226,27 @@ public class ParkingSystemFacade {
         }
         
         // Initialize dummy fines for testing
+//        try {
+//            Statement stmt = conn.createStatement();
+//            stmt.executeUpdate("INSERT OR IGNORE INTO fines (plate_number, amount, reason, status) VALUES ('JJU8888', 50.0, 'Illegal Parking', 'UNPAID')");
+//            stmt.executeUpdate("INSERT OR IGNORE INTO fines (plate_number, amount, reason, status) VALUES ('WWA1234', 100.0, 'Overtime > 24h', 'UNPAID')");
+//        } catch (Exception e) { }
+    }
+    
+    public boolean validateAdminLogin(String inputPassword) {
+        String dbPassword = "";
+
         try {
-            Statement stmt = conn.createStatement();
-            stmt.executeUpdate("INSERT OR IGNORE INTO fines (plate_number, amount, reason, status) VALUES ('JJU8888', 50.0, 'Illegal Parking', 'UNPAID')");
-            stmt.executeUpdate("INSERT OR IGNORE INTO fines (plate_number, amount, reason, status) VALUES ('WWA1234', 100.0, 'Overtime > 24h', 'UNPAID')");
-        } catch (Exception e) { }
+            String sql = "SELECT setting_value FROM admin_settings WHERE setting_key = 'admin_password'";
+            java.sql.Statement stmt = conn.createStatement();
+            java.sql.ResultSet rs = stmt.executeQuery(sql);
+            if (rs.next()) {
+                dbPassword = rs.getString("setting_value");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return inputPassword != null && inputPassword.equals(dbPassword);
     }
 }

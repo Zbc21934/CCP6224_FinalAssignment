@@ -5,8 +5,6 @@ import model.Floor;
 import model.ParkingSpot;
 import model.Vehicle;
 import model.Ticket;
-import view.ReceiptDialog;
-import view.PaymentDialog;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -24,7 +22,7 @@ public class MainFrame extends JFrame {
 
         // Setup Window
         setTitle("University Parking Management System");
-        setSize(1100, 750); 
+        setSize(1100, 750);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -36,11 +34,25 @@ public class MainFrame extends JFrame {
         JPanel visualPanel = createVisualPanel();
         tabbedPane.addTab("Parking Lot View", visualPanel);
 
-        // Tab 2: Reports
-        JPanel reportPanel = createReportPanel();
-        tabbedPane.addTab("Reports", reportPanel);
-
+        // Tab 2: Admin Panel
+        AdminPanel adminPanel = new AdminPanel(parkingSystem);
+        tabbedPane.addTab("Admin Panel", adminPanel);
         add(tabbedPane);
+        tabbedPane.addChangeListener(e -> {
+            //  Admin Panel (Index 1)
+            if (tabbedPane.getSelectedIndex() == 1) {
+                // NOT login
+                if (!adminPanel.isAuthenticated()) {
+                    // SwingUtilities ，poppup smooth
+                    SwingUtilities.invokeLater(() -> {
+                        boolean success = adminPanel.triggerLogin();
+                        if (!success) {
+                            tabbedPane.setSelectedIndex(0);
+                        }
+                    });
+                }
+            }
+        });
 
         // Load first floor
         if (!parkingSystem.getParkingLot().getFloors().isEmpty()) {
@@ -50,22 +62,22 @@ public class MainFrame extends JFrame {
 
     private JPanel createVisualPanel() {
         JPanel container = new JPanel(new BorderLayout());
-        container.setBackground(Color.WHITE); 
+        container.setBackground(Color.WHITE);
 
         // --- Top Bar: Title and Controls ---
         JPanel topBar = new JPanel(new BorderLayout());
-        topBar.setBackground(new Color(245, 245, 245)); 
-        topBar.setBorder(new EmptyBorder(15, 20, 15, 20)); 
+        topBar.setBackground(new Color(245, 245, 245));
+        topBar.setBorder(new EmptyBorder(15, 20, 15, 20));
 
         // 1. Left Side: Header Title
         currentFloorLabel = new JLabel("Please Select a Floor");
-        currentFloorLabel.setFont(new Font("Segoe UI", Font.BOLD, 24)); 
-        currentFloorLabel.setForeground(new Color(52, 152, 219)); 
+        currentFloorLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        currentFloorLabel.setForeground(new Color(52, 152, 219));
         topBar.add(currentFloorLabel, BorderLayout.WEST);
 
         // 2. Right Side: Button Area
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        actionPanel.setOpaque(false); 
+        actionPanel.setOpaque(false);
 
         // --- Add Floor Selection Buttons ---
         List<Floor> floors = parkingSystem.getParkingLot().getFloors();
@@ -82,7 +94,7 @@ public class MainFrame extends JFrame {
         JButton rulesBtn = createStyledButton("<html><b>i<b>", new Color(52, 152, 219), Color.WHITE);
         rulesBtn.addActionListener(e -> showVehicleRules());
         actionPanel.add(rulesBtn);
-        
+
         actionPanel.add(Box.createHorizontalStrut(10));
 
         // --- Add Exit Button (Orange Theme) ---
@@ -100,13 +112,13 @@ public class MainFrame extends JFrame {
         // --- Center Area: Parking Spots Grid ---
         spotsPanel = new JPanel();
         spotsPanel.setBackground(Color.WHITE);
-        spotsPanel.setBorder(new EmptyBorder(20, 20, 20, 20)); 
+        spotsPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         JScrollPane scrollPane = new JScrollPane(spotsPanel);
-        scrollPane.setBorder(null); 
+        scrollPane.setBorder(null);
 
-        container.add(topBar, BorderLayout.NORTH); 
-        container.add(scrollPane, BorderLayout.CENTER); 
-        
+        container.add(topBar, BorderLayout.NORTH);
+        container.add(scrollPane, BorderLayout.CENTER);
+
         return container;
     }
 
@@ -173,11 +185,11 @@ public class MainFrame extends JFrame {
         JComboBox<String> typeBox = new JComboBox<>(vehicleTypes);
         panel.add(new JLabel("Select Vehicle Type:"));
         panel.add(typeBox);
-        
+
         // Handicapped check box
         JCheckBox handicappedCheckBox = new JCheckBox("Handicapped Card Holder?");
         panel.add(handicappedCheckBox);
-        
+
         // 3. Confirm Dialog
         int result = JOptionPane.showConfirmDialog(null, panel, "Park Vehicle",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -186,7 +198,7 @@ public class MainFrame extends JFrame {
             String plate = plateField.getText().trim();
             String type = (String) typeBox.getSelectedItem();
             boolean isHandicapped = handicappedCheckBox.isSelected();
-            
+
             if (plate.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "License plate cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -195,28 +207,28 @@ public class MainFrame extends JFrame {
             // ==========================================================
             // ✅ RESERVATION VERIFICATION LOGIC
             // ==========================================================
-            boolean hasReservation = false; 
+            boolean hasReservation = false;
 
             // Check if the spot is a ReservedSpot
             if (spot instanceof model.ReservedSpot) {
                 // Prompt user for Reservation ID
-                String resId = JOptionPane.showInputDialog(this, 
-                        "This is a Reserved Spot.\nPlease enter your Reservation ID:", 
-                        "Reservation Check", 
+                String resId = JOptionPane.showInputDialog(this,
+                        "This is a Reserved Spot.\nPlease enter your Reservation ID:",
+                        "Reservation Check",
                         JOptionPane.QUESTION_MESSAGE);
-                
+
                 // Validate ID via Facade
                 boolean isValid = parkingSystem.validateReservation(resId);
                 hasReservation = isValid;
 
                 // Warn user if invalid ID but allow entry (Violation Logic)
                 if (!isValid) {
-                    int choice = JOptionPane.showConfirmDialog(this, 
-                            "Invalid or missing Reservation ID!\nParking here will result in a FINE.\nDo you still want to park?", 
-                            "Warning: Violation", 
-                            JOptionPane.YES_NO_OPTION, 
+                    int choice = JOptionPane.showConfirmDialog(this,
+                            "Invalid or missing Reservation ID!\nParking here will result in a FINE.\nDo you still want to park?",
+                            "Warning: Violation",
+                            JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE);
-                            
+
                     if (choice != JOptionPane.YES_OPTION) {
                         return; // User cancelled
                     }
@@ -228,7 +240,7 @@ public class MainFrame extends JFrame {
             // CALL BACKEND (Updated: Passing hasReservation)
             // ==========================================================
             Ticket ticket = parkingSystem.parkVehicle(plate, type, spot.getSpotID(), isHandicapped, hasReservation);
-            
+
             if (ticket != null) {
                 String ticketMsg = "<html>"
                         + "<h3>✅ Entry Success!</h3>"
@@ -256,7 +268,7 @@ public class MainFrame extends JFrame {
         payDialog.setVisible(true);
         String method = payDialog.getSelectedMethod();
 
-        if (method != null) { 
+        if (method != null) {
             boolean paid = parkingSystem.processPayment(plateNumber, method);
 
             if (paid) {
@@ -278,48 +290,16 @@ public class MainFrame extends JFrame {
         String rulesHtml = model.VehicleRules.getRulesHtml();
         JOptionPane.showMessageDialog(this, rulesHtml, "Parking Lot Rules", JOptionPane.INFORMATION_MESSAGE);
     }
-    
-    private JPanel createReportPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        
-        JPanel navBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
-        navBar.setBackground(new Color(240, 240, 240));
 
-        JButton btnOcc = new JButton("Occupancy Report ");
-        JButton btnRev = new JButton("Revenue Report ");
-        JButton btnVeh = new JButton("Currently Vehicles in the Lot ");
-        JButton btnFine = new JButton("Fine Report");
-        navBar.add(btnOcc);
-        navBar.add(btnRev);
-        navBar.add(btnVeh);
-        navBar.add(btnFine);
-        
-        JTextArea reportArea = new JTextArea();
-        reportArea.setFont(new Font("Monospaced", Font.PLAIN, 15));
-        reportArea.setEditable(false);
-        reportArea.setMargin(new Insets(20, 20, 20, 20));
-        JScrollPane scrollPane = new JScrollPane(reportArea);
-
-        btnOcc.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("OCCUPANCY")));
-        btnRev.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("REVENUE")));
-        btnVeh.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("VEHICLES")));
-        btnFine.addActionListener(e -> reportArea.setText(parkingSystem.getDashboardReport("FINES"))); 
-
-        panel.add(navBar, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        return panel;
-    }
-    
     private JButton createStyledButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btn.setBackground(bg);
         btn.setForeground(fg);
-        btn.setFocusPainted(false); 
+        btn.setFocusPainted(false);
         btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1), 
-                BorderFactory.createEmptyBorder(8, 15, 8, 15) 
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                BorderFactory.createEmptyBorder(8, 15, 8, 15)
         ));
         return btn;
     }

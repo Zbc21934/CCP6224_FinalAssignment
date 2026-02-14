@@ -15,6 +15,16 @@ public class ReportService {
     private Connection conn;
     private ParkingLot parkingLot;
 
+    
+    public String getReportByType(String type) {
+    switch (type.toUpperCase()) {
+        case "OCCUPANCY": return getOccupancySummary();
+        case "REVENUE":   return getRevenueSummary();
+        case "VEHICLES":  return getActiveVehicleTable();
+        case "FINES":     return getFineReport();
+        default:          return "Unknown Report Type";
+    }
+}
     public ReportService(Connection conn, ParkingLot parkingLot) {
         this.conn = conn;
         this.parkingLot = parkingLot;
