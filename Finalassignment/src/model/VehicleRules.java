@@ -4,7 +4,7 @@ public class VehicleRules {
 
     public static String getRulesHtml() {
         return "<html><body style='width: 300px; padding: 5px;'>"
-                + "<h2 style='color: #2c3e50;'>🚗 Parking Vehicle Rules</h2>"
+                + "<h2 style='color: #2c3e50;'>Parking Vehicle Rules</h2>"
                 + "<hr>"
                 + "<table border='0' cellpadding='5'>"
                 
@@ -16,13 +16,13 @@ public class VehicleRules {
                 
                 // Car Rule
                 + "<tr>"
-                + "<td><b>🚙 Car:</b></td>"
+                + "<td><b>🚗 Car:</b></td>"
                 + "<td>Compact, Regular, Reserved</td>"
                 + "</tr>"
                 
                 // SUV Rule
                 + "<tr>"
-                + "<td><b>🛻 SUV/Truck:</b></td>"
+                + "<td><b>🚙 SUV/Truck:</b></td>"
                 + "<td>Regular, Reserved</td>"
                 + "</tr>"
                 
