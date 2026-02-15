@@ -73,14 +73,23 @@ public class PaymentService {
                 // 3. Total Due
                 double totalDue = parkingFee + fines;
 
-                // --- Formatting for Display ---
-                double displayRate = (spot != null) ? spot.getHourlyRate() : 2.0;
-                if (isHandicapped) {
-                     if (spot instanceof model.HandicappedSpot) {
+                
+               // Default: Show the standard rate of the spot (e.g., RM 5.00 for Regular)
+                double displayRate = (spot != null) ? spot.getHourlyRate() : 0.0;
+                String okuLabel = ""; 
+
+                // Only override the display IF the vehicle actually qualified for the discount
+                if (isHandicapped && vehicle instanceof model.HandicappedVehicle) {
+                    
+                    if (spot instanceof model.HandicappedSpot) {
+                         // Case A: Free Parking
                          displayRate = 0.0; 
-                     } else {
+                         okuLabel = "<br><span style='color:green; font-size:10px;'>(Handicapped Free Parking)</span>";
+                    } else {
+                         // Case B: Discounted RM 2.0 rate 
                          displayRate = 2.0;
-                     }
+                         okuLabel = "<br><span style='color:orange; font-size:10px;'>(Handicapped Discount Rate)</span>";
+                    }
                 }
 
                 DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -96,10 +105,7 @@ public class PaymentService {
                     paymentMethodInfo = "<br><b>Payment Method:</b> " + method;
                 }
                 
-                String okuLabel = "";
-                if (isHandicapped) {
-                    okuLabel = "<br><span style='color:orange; font-size:10px;'>(Handicapped Rate Applied)</span>";
-                }
+               
                 
                 // Violation Warning Label
                 String violationLabel = "";

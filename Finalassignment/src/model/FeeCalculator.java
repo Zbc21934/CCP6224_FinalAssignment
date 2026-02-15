@@ -8,20 +8,24 @@ public class FeeCalculator {
     public static double calculate(Vehicle vehicle, ParkingSpot spot, LocalDateTime entryTime, boolean isHandicappedCard) {
         long hours = getDurationInHours(entryTime);
 
-        //handicapped check
-        if (isHandicappedCard) {
-            // Case A, HAVE THE CARD M PARK AT HANDCIPPED PARKING =FREE
-            if (spot instanceof HandicappedSpot) {
-                System.out.println("ℹ️ OKU Free Parking Applied");
+        // Requirement: "Handicapped Vehicle... gets a discounted price of RM 2/hour only for a handicapped card holder"
+        if (isHandicappedCard && vehicle instanceof model.HandicappedVehicle) {
+            
+            // Sub-rule: If they park in a Handicapped Spot -> FREE 
+            if (spot instanceof model.HandicappedSpot) {
+                System.out.println("ℹ️ OKU Privilege: Free Parking (Handicapped Spot)");
                 return 0.0;
-            }//CASE B, HAVE CARD BUT NO PARKING AT THE HANDCIPPED PARK
-            System.out.println("ℹ️ OKU Flat Rate Applied (RM 2.0)");
+            } 
+            
+            // Sub-rule: If they park in ANY other spot (Regular/Reserved) -> Discounted to RM 2.0/hr 
+            System.out.println("ℹ️ OKU Privilege: Flat Rate RM 2.0/hr Applied");
             return hours * 2.0;
-
         }
-        //CASE C: NORMA USER
-        double rate = (spot != null) ? spot.getHourlyRate() : 2.0;
-
+        
+        // If it's a regular Car/SUV, OR a Handicapped Vehicle WITHOUT a card,
+        // they pay the standard rate of the spot.
+        // Compact: 2.0, Regular: 5.0, Reserved: 10.0
+        double rate = (spot != null) ? spot.getHourlyRate() : 0.0;
         return hours * rate;
     }
 
