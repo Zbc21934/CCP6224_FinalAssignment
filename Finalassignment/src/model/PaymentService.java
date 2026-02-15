@@ -49,7 +49,7 @@ public class PaymentService {
                 String spotId = rs.getString("spot_id");
                 boolean isHandicapped = rs.getInt("is_handicapped") == 1;
                 
-                // ✅ Retrieve Violation Status from DB
+                // Retrieve Violation Status from DB
                 // Default to false if column is missing (safety check), though we added it.
                 boolean isViolation = false;
                 try {
@@ -61,17 +61,22 @@ public class PaymentService {
                 Vehicle vehicle = Vehicle.create(plateNumber, type);
                 ParkingSpot spot = parkingLot.getSpotById(spotId);
                 
-                // 1. Calculate Parking Fee
-                double parkingFee = FeeCalculator.calculate(vehicle, spot, entryTime, isHandicapped);
-                
                 long hours = FeeCalculator.getDurationInHours(entryTime);
+                
+                
+                
+                String strategyName = "Option A"; 
+                try {
+                    strategyName = rs.getString("entry_strategy");
+                } catch (SQLException e) {}
+                
+                
+                model.FineScheme applicableScheme = fineManager.getSchemeByString(strategyName);
+                double fines = applicableScheme.FineCalculation(hours, isViolation);
 
-                // 2. Calculate Fines (NEW LOGIC)
-                // Use FineManager to calculate fine based on duration and violation status
-                double fines = fineManager.calculateFine(hours, isViolation);
-
-                // 3. Total Due
-                double totalDue = parkingFee + fines;
+                // calculate totaldue
+                double parkingFee = FeeCalculator.calculate(vehicle, spot, entryTime, isHandicapped);
+                double totalDue = parkingFee + fines; 
 
                 
                // Default: Show the standard rate of the spot (e.g., RM 5.00 for Regular)
@@ -203,16 +208,38 @@ public class PaymentService {
                 try {
                     isViolation = rs.getInt("is_violation") == 1;
                 } catch (SQLException e) {}
+                
+                // 2. Get Entry Strategy (CRITICAL CHECK)
+                String storedStrategyName = "Option A"; // Default
+                try {
+                    String dbVal = rs.getString("entry_strategy");
+                    if (dbVal != null) storedStrategyName = dbVal;
+                } catch (SQLException e) {}
+                
+                // Restore the strategy object from the name stored in DB
+                model.FineScheme applicableScheme = fineManager.getSchemeByString(storedStrategyName);
+                System.out.println("3️⃣  ACTUAL Strategy Being Used:         [" + applicableScheme.getClass().getSimpleName() + "]");
+                
+                // Compare them
+                if (!storedStrategyName.equals(fineManager.getCurrentSchemeName())) {
+                    System.out.println("✅  SUCCESS: System is ignoring current setting and using the old rule!");
+                } else {
+                    System.out.println("⚠️  NOTE: Stored strategy matches current setting (or update didn't work).");
+                }
 
                 Vehicle vehicle = Vehicle.create(plate, type);
                 ParkingSpot spot = parkingLot.getSpotById(spotId);
                 
-                // 1. Base Fee
+                // 3. Base Fee Calculation
                 double fee = FeeCalculator.calculate(vehicle, spot, entryTime, isHandicapped);
                 
-                // 2. Fine
                 long hours = FeeCalculator.getDurationInHours(entryTime);
-                double fine = fineManager.calculateFine(hours, isViolation);
+                
+                // 4. Fine Calculation (Using the STORED strategy)
+                double fine = applicableScheme.FineCalculation(hours, isViolation);
+                
+                System.out.println("4️⃣  Calculated Fine: RM " + fine);
+                System.out.println("======================================================\n");
                 
                 return fee + fine;
             }
