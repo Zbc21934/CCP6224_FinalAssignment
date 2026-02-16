@@ -152,7 +152,7 @@ public class PaymentService {
         Connection conn = DbConnection.getInstance().getConnection();
         try {
             // Get Ticket ID
-            String findSql = "SELECT ticket_id FROM tickets WHERE plate_number = ? AND status = 'ACTIVE'";
+            String findSql = "SELECT * FROM tickets WHERE plate_number = ? AND status = 'ACTIVE'";
             PreparedStatement findPstmt = conn.prepareStatement(findSql);
             findPstmt.setString(1, plateNumber);
             ResultSet rs = findPstmt.executeQuery();
@@ -176,9 +176,10 @@ public class PaymentService {
                 tStmt.setString(3, ticketId);
                 tStmt.executeUpdate();
 
-                // (Optional) Mark legacy fines table as paid if you use it
-                // ...
-
+                String updateFines = "UPDATE fines SET status = 'PAID' WHERE plate_number = ? AND status = 'UNPAID'";
+                PreparedStatement fStmt = conn.prepareStatement(updateFines);
+                fStmt.setString(1, plateNumber);
+                fStmt.executeUpdate();
                 return true;
             }
         } catch (SQLException e) {
