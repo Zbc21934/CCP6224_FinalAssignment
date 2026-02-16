@@ -11,7 +11,7 @@ public class Ticket {
     private LocalDateTime entryTime;
     private boolean handicappedCardHolder; 
     
-    // ✅ NEW: Field to track if this ticket is for a violation (e.g., unauthorized parking)
+    //Field to track if this ticket is for a violation (e.g., unauthorized parking)
     private boolean isViolation; 
 
     // Private constructor (updated to accept isViolation)
@@ -25,7 +25,7 @@ public class Ticket {
         this.isViolation = isViolation; // Assign the value
     }
 
-    // ✅ Updated Factory Method to create a ticket with violation status
+    //Updated Factory Method to create a ticket with violation status
     public static Ticket createEntryTicket(String plateNumber, String spotId, String vehicleType, boolean isHandicapped, boolean isViolation) {
         return new Ticket(plateNumber, spotId, vehicleType, isHandicapped, isViolation);
     }
@@ -38,7 +38,7 @@ public class Ticket {
     public LocalDateTime getEntryTime() { return entryTime; }
     public boolean isHandicappedCardHolder() { return handicappedCardHolder; }
     
-    // ✅ NEW Getter for violation status (used by Facade to calculate fines)
+    //NEW Getter for violation status (used by Facade to calculate fines)
     public boolean isViolation() { return isViolation; }
 
     public String getFormattedEntryTime() {

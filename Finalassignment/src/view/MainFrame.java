@@ -205,7 +205,7 @@ public class MainFrame extends JFrame {
             }
 
             // ==========================================================
-            // ✅ RESERVATION VERIFICATION LOGIC
+            // RESERVATION VERIFICATION LOGIC
             // ==========================================================
             boolean hasReservation = false;
 

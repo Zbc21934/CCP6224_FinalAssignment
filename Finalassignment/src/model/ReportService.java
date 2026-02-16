@@ -152,7 +152,7 @@ public class ReportService {
                         "UNPAID"));
             }
         } catch (SQLException e) {
-            sb.append("DB Error: " + e.getMessage() + "\n");
+            sb.append("Error: " + e.getMessage() + "\n");
         }
 
         // 1.2 Real-time calculation for active vehicles in the lot
@@ -189,7 +189,7 @@ public class ReportService {
                 }
             }
         } catch (Exception e) {
-            sb.append("❌ Calculation Error: " + e.getMessage() + "\n");
+            sb.append("Calculation Error: " + e.getMessage() + "\n");
         }
 
         if (!hasUnpaid) sb.append("No active unpaid fines found.\n");
@@ -214,7 +214,7 @@ public class ReportService {
                         "PAID"));
             }
         } catch (SQLException e) {
-            sb.append("DB Error: " + e.getMessage() + "\n");
+            sb.append("Error: " + e.getMessage() + "\n");
         }
 
         if (!hasPaid) sb.append("No payment history found.\n");

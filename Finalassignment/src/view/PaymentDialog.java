@@ -50,14 +50,14 @@ public class PaymentDialog extends JDialog {
         btnPanel.setBackground(Color.WHITE);
 
         // Cash Payment Button
-        JButton cashBtn = createStyledButton("💵 Pay Cash", new Color(46, 204, 113)); 
+        JButton cashBtn = createStyledButton("Pay Cash", new Color(46, 204, 113)); 
         cashBtn.addActionListener(e -> {
             selectedMethod = "CASH"; 
             dispose(); // Close dialog
         });
 
         // Card Payment Button (Triggers the formal card entry form)
-        JButton cardBtn = createStyledButton("💳 Pay Card", new Color(52, 152, 219)); 
+        JButton cardBtn = createStyledButton("Pay Card", new Color(52, 152, 219)); 
         cardBtn.addActionListener(e -> {
             performCardSimulation();
         });
@@ -123,7 +123,7 @@ public class PaymentDialog extends JDialog {
         cardFormPanel.add(Box.createVerticalStrut(20));
         
         // Security Indicator
-        JLabel icons = new JLabel("🔒 Secured by ParkingPayment Gateway");
+        JLabel icons = new JLabel("Secured by ParkingPayment Gateway");
         icons.setFont(new Font("Arial", Font.ITALIC, 10));
         icons.setForeground(Color.GRAY);
         icons.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -177,7 +177,7 @@ public class PaymentDialog extends JDialog {
             JOptionPane.showMessageDialog(this, 
                 "Connecting to Bank Server...\n" +
                 "Verifying Card: **** **** **** " + cardNum.substring(12) + "\n\n" +
-                "Transaction Authorized! ✅", 
+                "Transaction Authorized!", 
                 "Processing Payment", 
                 JOptionPane.INFORMATION_MESSAGE);
 

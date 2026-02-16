@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 
 public class PaymentService {
 
-    // ✅ New: Add FineManager to calculate fines dynamically
+    //Add FineManager to calculate fines dynamically
     private FineManager fineManager;
 
     public PaymentService(FineManager sharedManager) {
@@ -25,7 +25,7 @@ public class PaymentService {
             // If asking for Bill (isPaid=false), look for ACTIVE ticket.
             String status = isPaid ? "PAID" : "ACTIVE";
             
-            // ✅ Updated SQL: Fetch 'is_violation' column
+            //Updated SQL: Fetch 'is_violation' column
             String sql = "SELECT * FROM tickets WHERE plate_number = ? AND status = ? ORDER BY entry_time DESC LIMIT 1";
 
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -204,7 +204,7 @@ public class PaymentService {
                 String spotId = rs.getString("spot_id");
                 boolean isHandicapped = rs.getInt("is_handicapped") == 1;
                 
-                // ✅ Get Violation Status
+                //Get Violation Status
                 boolean isViolation = false;
                 try {
                     isViolation = rs.getInt("is_violation") == 1;
@@ -219,13 +219,13 @@ public class PaymentService {
                 
                 // Restore the strategy object from the name stored in DB
                 model.FineScheme applicableScheme = fineManager.getSchemeByString(storedStrategyName);
-                System.out.println("3️⃣  ACTUAL Strategy Being Used:         [" + applicableScheme.getClass().getSimpleName() + "]");
+                System.out.println("ACTUAL Strategy Being Used:         [" + applicableScheme.getClass().getSimpleName() + "]");
                 
                 // Compare them
                 if (!storedStrategyName.equals(fineManager.getCurrentSchemeName())) {
-                    System.out.println("✅  SUCCESS: System is ignoring current setting and using the old rule!");
+                    System.out.println("SUCCESS: System is ignoring current setting and using the old rule!");
                 } else {
-                    System.out.println("⚠️  NOTE: Stored strategy matches current setting (or update didn't work).");
+                    System.out.println("NOTE: Stored strategy matches current setting (or update didn't work).");
                 }
 
                 Vehicle vehicle = Vehicle.create(plate, type);
@@ -239,7 +239,7 @@ public class PaymentService {
                 // 4. Fine Calculation (Using the STORED strategy)
                 double fine = applicableScheme.FineCalculation(hours, isViolation);
                 
-                System.out.println("4️⃣  Calculated Fine: RM " + fine);
+                System.out.println("Calculated Fine: RM " + fine);
                 System.out.println("======================================================\n");
                 
                 return fee + fine;

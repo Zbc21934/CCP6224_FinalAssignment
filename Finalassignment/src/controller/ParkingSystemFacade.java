@@ -50,7 +50,7 @@ public class ParkingSystemFacade {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("❌ Reservation check failed: " + e.getMessage());
+            System.out.println("Reservation check failed: " + e.getMessage());
         }
         return false;
     }
@@ -93,7 +93,7 @@ public class ParkingSystemFacade {
         }
 
         if (isViolation) {
-            System.out.println("⚠️ Violation Recorded: " + plateNumber + " in Reserved Spot without ID.");
+            System.out.println("Violation Recorded: " + plateNumber + " in Reserved Spot without ID.");
             double fineAmount = fineManager.calculateFine(0, true);
 
             if (fineAmount > 0) {

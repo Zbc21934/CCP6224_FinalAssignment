@@ -43,7 +43,7 @@ public class AdminPanel extends JPanel {
 
     private void showLockScreen() {
         removeAll();
-        JLabel lockLabel = new JLabel("🔒 Admin Area Locked", SwingConstants.CENTER);
+        JLabel lockLabel = new JLabel("Admin Area Locked", SwingConstants.CENTER);
         lockLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lockLabel.setForeground(Color.GRAY);
         add(lockLabel, BorderLayout.CENTER);
